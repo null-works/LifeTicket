@@ -19,19 +19,19 @@
             <div class="flex gap-2">
                 <div class="relative" x-data="{ open: false }">
                     <button type="button" @click="open = !open"
-                            class="h-[38px] w-[46px] border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                        <span id="emoji-preview">{{ ticket.emoji if ticket and ticket.emoji else '😀' }}</span>
+                            class="h-[38px] w-[46px] border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                            title="Pick an emoji">
+                        <span id="emoji-preview">{{ ticket.emoji if ticket and ticket.emoji else '🎫' }}</span>
                     </button>
                     <input type="hidden" name="emoji" id="emoji-input" value="{{ ticket.emoji if ticket and ticket.emoji else '' }}">
                     <div x-show="open" x-cloak @click.away="open = false"
-                         class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-xl shadow-lg p-3 z-50 w-[280px]">
-                        <div class="grid grid-cols-8 gap-1 max-h-[200px] overflow-y-auto text-lg" id="emoji-grid">
-                        </div>
-                        <div class="mt-2 pt-2 border-t dark:border-gray-700 flex gap-1">
-                            <button type="button" @click="document.getElementById('emoji-input').value = ''; document.getElementById('emoji-preview').textContent = '😀'; open = false"
-                                    class="text-xs text-gray-500 hover:text-red-500 transition">Clear</button>
-                        </div>
+                         class="absolute top-full left-0 mt-1 z-50">
+                        <emoji-picker id="emoji-picker"></emoji-picker>
                     </div>
+                    <button type="button" x-show="document.getElementById('emoji-input')?.value"
+                            @click="document.getElementById('emoji-input').value = ''; document.getElementById('emoji-preview').textContent = '🎫'"
+                            class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none flex items-center justify-center hover:bg-red-600"
+                            title="Clear emoji">&times;</button>
                 </div>
                 <input type="text" name="title" id="title" required
                        value="{{ ticket.title if ticket else '' }}"
@@ -111,19 +111,30 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-const emojis = ['📋','📌','📝','📎','📁','📂','🗂️','📊','📈','📉','🔔','🔕','⏰','⏳','🕐','📅','📆','🗓️','✅','❌','⚠️','🚨','💡','🔑','🔒','🔓','🏠','🏢','🏥','🏦','🚗','✈️','🚀','🛒','💰','💳','💵','🎯','🎓','📚','📖','✏️','🖊️','💻','🖥️','📱','📧','💬','📞','🔧','🛠️','⚙️','🧹','🧺','🍽️','🏋️','🧘','💊','🩺','❤️','⭐','🌟','🔥','💪','👍','👎','🤝','👨‍👩‍👧‍👦','👤','🐛','🐞','🎨','🎬','🎵','🎮','🌱','🌍','♻️','🔄','📦','🏷️','🎁','🎉','🎈','🏆','🥇','💎'];
-const grid = document.getElementById('emoji-grid');
-emojis.forEach(e => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer';
-    btn.textContent = e;
-    btn.addEventListener('click', () => {
-        document.getElementById('emoji-input').value = e;
-        document.getElementById('emoji-preview').textContent = e;
-    });
-    grid.appendChild(btn);
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
+<style>
+emoji-picker {
+    --border-radius: 12px;
+    --num-columns: 8;
+    --emoji-size: 1.4rem;
+    --category-emoji-size: 1.2rem;
+}
+.dark emoji-picker {
+    --background: #1f2937;
+    --border-color: #374151;
+    --input-border-color: #4b5563;
+    --input-font-color: #f3f4f6;
+    --indicator-color: #6366f1;
+    --category-font-color: #9ca3af;
+    --emoji-font-color: white;
+    color-scheme: dark;
+}
+</style>
+<script type="module">
+document.querySelector('#emoji-picker').addEventListener('emoji-click', e => {
+    const emoji = e.detail.unicode;
+    document.getElementById('emoji-input').value = emoji;
+    document.getElementById('emoji-preview').textContent = emoji;
 });
 </script>
 {% endblock %}
