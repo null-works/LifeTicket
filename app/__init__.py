@@ -53,15 +53,21 @@ def _ensure_admin(app):
     username = os.environ.get("ADMIN_USERNAME", "admin")
     password = os.environ.get("ADMIN_PASSWORD")
     if not password:
+        print("[LifeTicket] WARNING: ADMIN_PASSWORD not set — no admin user created")
         return
 
-    user = User.query.filter_by(username=username).first()
-    if user:
-        if not user.check_password(password):
+    try:
+        user = User.query.filter_by(username=username).first()
+        if user:
             user.set_password(password)
             db.session.commit()
-    else:
-        user = User(username=username)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+            print(f"[LifeTicket] Admin user '{username}' password updated")
+        else:
+            user = User(username=username)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+            print(f"[LifeTicket] Admin user '{username}' created")
+    except Exception as e:
+        db.session.rollback()
+        print(f"[LifeTicket] ERROR creating admin user: {e}")

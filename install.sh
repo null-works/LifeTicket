@@ -32,11 +32,8 @@ if [ ! -f .env ]; then
     fi
   done
 
-  cat > .env <<ENVFILE
-SECRET_KEY=${SECRET}
-ADMIN_USERNAME=${ADMIN_USER}
-ADMIN_PASSWORD=${ADMIN_PASS}
-ENVFILE
+  printf 'SECRET_KEY=%s\nADMIN_USERNAME=%s\nADMIN_PASSWORD=%s\n' \
+    "$SECRET" "$ADMIN_USER" "$ADMIN_PASS" > .env
   chmod 600 .env
   echo "Generated .env with SECRET_KEY and admin credentials"
 else
