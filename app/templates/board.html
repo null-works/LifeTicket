@@ -44,7 +44,7 @@
             <!-- Collapsed view -->
             <div x-show="!cancelledOpen" @click="cancelledOpen = true"
                  class="flex flex-col items-center justify-center h-full py-4 gap-2 select-none">
-                <span class="text-lg" title="Cancelled">✕</span>
+                <span class="text-lg" title="Cancelled">♻️</span>
                 <span class="text-xs text-gray-500 dark:text-gray-400 font-medium [writing-mode:vertical-lr] rotate-180 tracking-wider uppercase">Cancelled</span>
                 {% if columns[status] | length > 0 %}
                 <span class="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1">{{ columns[status] | length }}</span>
