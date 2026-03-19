@@ -40,6 +40,24 @@ class Tag(db.Model):
         return {"id": self.id, "name": self.name}
 
 
+class GroceryItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    quantity = db.Column(db.String(50), default="")
+    aisle = db.Column(db.String(100), default="")
+    checked = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "quantity": self.quantity,
+            "aisle": self.aisle,
+            "checked": self.checked,
+        }
+
+
 class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     emoji = db.Column(db.String(10), default="")

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required
 from app import db
-from app.models import Ticket, Category, Tag
+from app.models import Ticket, Category, Tag, GroceryItem
 from datetime import date, datetime
 
 main = Blueprint("main", __name__)
@@ -152,6 +152,40 @@ def delete_category(cat_id):
     return redirect(url_for("main.manage_categories"))
 
 
+@main.route("/grocery", methods=["GET", "POST"])
+@login_required
+def grocery():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        quantity = request.form.get("quantity", "").strip()
+        aisle = request.form.get("aisle", "").strip()
+        if name:
+            item = GroceryItem(name=name, quantity=quantity, aisle=aisle)
+            db.session.add(item)
+            db.session.commit()
+        return redirect(url_for("main.grocery"))
+
+    items = GroceryItem.query.order_by(GroceryItem.checked, GroceryItem.created_at.desc()).all()
+    return render_template("grocery.html", items=items)
+
+
+@main.route("/grocery/<int:item_id>/delete", methods=["POST"])
+@login_required
+def grocery_delete(item_id):
+    item = GroceryItem.query.get_or_404(item_id)
+    db.session.delete(item)
+    db.session.commit()
+    return redirect(url_for("main.grocery"))
+
+
+@main.route("/grocery/clear-checked", methods=["POST"])
+@login_required
+def grocery_clear_checked():
+    GroceryItem.query.filter_by(checked=True).delete()
+    db.session.commit()
+    return redirect(url_for("main.grocery"))
+
+
 # --- API Routes (for AJAX / board drag-drop) ---
 
 
@@ -167,6 +201,15 @@ def update_status(ticket_id):
         db.session.commit()
         return jsonify(ticket.to_dict())
     return jsonify({"error": "Invalid status"}), 400
+
+
+@api.route("/grocery/<int:item_id>/toggle", methods=["PATCH"])
+@login_required
+def grocery_toggle(item_id):
+    item = GroceryItem.query.get_or_404(item_id)
+    item.checked = not item.checked
+    db.session.commit()
+    return jsonify(item.to_dict())
 
 
 @api.route("/tickets", methods=["GET"])

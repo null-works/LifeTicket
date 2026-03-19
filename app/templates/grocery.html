@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Grocery List — LifeTicket{% endblock %}
+
+{% block content %}
+<div x-data="groceryList()" class="max-w-2xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Grocery List</h1>
+        {% set checked_count = items | selectattr('checked') | list | length %}
+        {% if checked_count > 0 %}
+        <form action="/grocery/clear-checked" method="POST">
+            <button type="submit" class="text-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition">
+                Clear checked ({{ checked_count }})
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Add item form -->
+    <form action="/grocery" method="POST" class="mb-6">
+        <div class="flex gap-2">
+            <input type="text" name="name" placeholder="Item name..." required
+                   class="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500 shadow-sm">
+            <input type="text" name="quantity" placeholder="Qty"
+                   class="w-20 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500 shadow-sm">
+            <input type="text" name="aisle" placeholder="Aisle / Section"
+                   class="w-36 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500 shadow-sm hidden sm:block">
+            <button type="submit" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700 transition shadow-sm">Add</button>
+        </div>
+    </form>
+
+    <!-- Items list -->
+    {% if items %}
+    <div class="space-y-2">
+        {% for item in items %}
+        <div class="flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 group transition-all {{ 'opacity-50' if item.checked }}"
+             data-id="{{ item.id }}">
+            <!-- Checkbox -->
+            <button @click="toggle({{ item.id }}, $el.closest('[data-id]'))"
+                    class="flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition
+                    {{ 'bg-green-500 border-green-500 text-white' if item.checked else 'border-gray-300 dark:border-gray-600 hover:border-brand-500' }}">
+                {% if item.checked %}
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                {% endif %}
+            </button>
+
+            <!-- Item info -->
+            <div class="flex-1 min-w-0">
+                <span class="text-sm font-medium text-gray-900 dark:text-gray-100 {{ 'line-through text-gray-400 dark:text-gray-500' if item.checked }}">{{ item.name }}</span>
+                {% if item.quantity %}
+                <span class="ml-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ item.quantity }}</span>
+                {% endif %}
+                {% if item.aisle %}
+                <span class="ml-1 text-xs text-brand-600 dark:text-brand-300">{{ item.aisle }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Delete -->
+            <form action="/grocery/{{ item.id }}/delete" method="POST" class="opacity-0 group-hover:opacity-100 transition">
+                <button type="submit" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 p-1 transition" title="Remove">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12 text-gray-400 dark:text-gray-600">
+        <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+        <p class="text-sm">Your grocery list is empty</p>
+    </div>
+    {% endif %}
+
+    {% set total = items | length %}
+    {% if total > 0 %}
+    <div class="mt-4 text-center text-xs text-gray-400 dark:text-gray-600">
+        {{ checked_count }} / {{ total }} items checked
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function groceryList() {
+    return {
+        async toggle(id, el) {
+            try {
+                const res = await fetch(`/api/grocery/${id}/toggle`, { method: 'PATCH' });
+                if (res.ok) location.reload();
+            } catch (err) {
+                console.error('Failed to toggle item:', err);
+            }
+        }
+    };
+}
+</script>
+{% endblock %}
