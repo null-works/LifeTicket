@@ -184,6 +184,21 @@ def delete_status(status_id):
     return redirect(url_for("main.manage_statuses"))
 
 
+@main.route("/statuses/<int:status_id>/edit", methods=["POST"])
+@login_required
+def edit_status(status_id):
+    status = Status.query.get_or_404(status_id)
+    label = request.form.get("label", "").strip()
+    color = request.form.get("color", status.color)
+    is_closed = request.form.get("is_closed") == "on"
+    if label:
+        status.label = label
+    status.color = color
+    status.is_closed = is_closed
+    db.session.commit()
+    return redirect(url_for("main.manage_statuses"))
+
+
 @main.route("/statuses/reorder", methods=["POST"])
 @login_required
 def reorder_statuses():

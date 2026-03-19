@@ -42,22 +42,52 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 divide-y dark:divide-gray-700"
          x-data="statusList()" id="status-list">
         {% for s in statuses %}
-        <div class="flex items-center gap-3 px-5 py-3 cursor-grab active:cursor-grabbing"
-             draggable="true" data-id="{{ s.id }}"
+        <div data-id="{{ s.id }}" x-data="{ editing: false }"
              @dragstart="dragStart($event, {{ s.id }})"
              @dragend="dragEnd($event)"
              @dragover.prevent="dragOver($event)"
              @drop="drop($event, {{ s.id }})">
-            <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 10.001 4.001A2 2 0 007 2zm0 6a2 2 0 10.001 4.001A2 2 0 007 8zm0 6a2 2 0 10.001 4.001A2 2 0 007 14zm6-8a2 2 0 10-.001-4.001A2 2 0 0013 6zm0 2a2 2 0 10.001 4.001A2 2 0 0013 8zm0 6a2 2 0 10.001 4.001A2 2 0 0013 14z"/></svg>
-            <span class="w-4 h-4 rounded-full flex-shrink-0" style="background: {{ s.color }}"></span>
-            <span class="font-medium text-gray-900 dark:text-white flex-1">{{ s.label }}</span>
-            <code class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ s.name }}</code>
-            {% if s.is_closed %}
-            <span class="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">Closed</span>
-            {% endif %}
-            <span class="text-sm text-gray-500 dark:text-gray-400">{{ s.tickets | length }}</span>
-            <form method="POST" action="/statuses/{{ s.id }}/delete" onsubmit="return confirm('Delete this status? Tickets will be moved to the first remaining status.')">
-                <button type="submit" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm">Delete</button>
+            <!-- View mode -->
+            <div x-show="!editing" class="flex items-center gap-3 px-5 py-3 cursor-grab active:cursor-grabbing"
+                 draggable="true">
+                <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 10.001 4.001A2 2 0 007 2zm0 6a2 2 0 10.001 4.001A2 2 0 007 8zm0 6a2 2 0 10.001 4.001A2 2 0 007 14zm6-8a2 2 0 10-.001-4.001A2 2 0 0013 6zm0 2a2 2 0 10.001 4.001A2 2 0 0013 8zm0 6a2 2 0 10.001 4.001A2 2 0 0013 14z"/></svg>
+                <span class="w-4 h-4 rounded-full flex-shrink-0" style="background: {{ s.color }}"></span>
+                <span class="font-medium text-gray-900 dark:text-white flex-1">{{ s.label }}</span>
+                <code class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ s.name }}</code>
+                {% if s.is_closed %}
+                <span class="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">Closed</span>
+                {% endif %}
+                <span class="text-sm text-gray-500 dark:text-gray-400">{{ s.tickets | length }}</span>
+                <button @click.stop="editing = true" class="text-brand-600 hover:text-brand-800 dark:text-brand-200 dark:hover:text-brand-100 text-sm">Edit</button>
+                <form method="POST" action="/statuses/{{ s.id }}/delete" onsubmit="return confirm('Delete this status? Tickets will be moved to the first remaining status.')">
+                    <button type="submit" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm">Delete</button>
+                </form>
+            </div>
+            <!-- Edit mode -->
+            <form x-show="editing" x-cloak method="POST" action="/statuses/{{ s.id }}/edit"
+                  class="px-5 py-3 space-y-2 bg-brand-50/50 dark:bg-gray-700/30">
+                <div class="flex items-end gap-3">
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Display Name</label>
+                        <input type="text" name="label" value="{{ s.label }}" required
+                               class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-1.5 border">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Color</label>
+                        <input type="color" name="color" value="{{ s.color }}"
+                               class="w-10 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer">
+                    </div>
+                    <label class="flex items-center gap-2 pb-1 cursor-pointer">
+                        <input type="checkbox" name="is_closed" {% if s.is_closed %}checked{% endif %}
+                               class="rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Closed</span>
+                    </label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="bg-brand-600 text-white px-3 py-1 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">Save</button>
+                    <button type="button" @click="editing = false" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
+                    <code class="ml-auto text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ s.name }}</code>
+                </div>
             </form>
         </div>
         {% else %}
