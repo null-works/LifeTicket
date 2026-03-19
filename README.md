@@ -15,78 +15,17 @@ Value: <inklit.ch server IP>
 TTL: 300
 ```
 
-Verify propagation:
-```bash
-dig calendar.kylem.cc +short
-```
-
-### 2. Server Setup (on inklit.ch)
+### 2. Install
 
 ```bash
 git clone https://github.com/null-works/LifeTicket.git
 cd LifeTicket
+sudo ./install.sh
 ```
 
-### 3. Configure Environment
-
-```bash
-cp .env.example .env
-# Edit .env and set a real secret key:
-#   SECRET_KEY=<random string>
-```
-
-Generate a secret key:
-```bash
-python3 -c "import secrets; print(secrets.token_hex(32))"
-```
-
-### 4. Launch
-
-```bash
-docker compose up -d --build
-```
-
-The app runs on `127.0.0.1:5050` (localhost only).
-
-### 5. Nginx + SSL Setup
-
-Create an Nginx site config:
-
-```bash
-sudo nano /etc/nginx/sites-available/calendar.kylem.cc
-```
-
-```nginx
-server {
-    listen 80;
-    server_name calendar.kylem.cc;
-
-    location / {
-        proxy_pass http://127.0.0.1:5050;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Enable the site and get an SSL cert:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/calendar.kylem.cc /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d calendar.kylem.cc
-```
+This handles everything: generates `.env`, builds the Docker container, configures Nginx, and obtains an SSL cert via Certbot.
 
 The app will be live at **https://calendar.kylem.cc**
-
-### 6. Verify
-
-```bash
-docker compose ps
-curl -I https://calendar.kylem.cc
-```
 
 ## Maintenance
 
