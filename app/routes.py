@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+from flask_login import login_required
 from app import db
 from app.models import Ticket, Category, Tag
 from datetime import date, datetime
@@ -11,6 +12,7 @@ api = Blueprint("api", __name__)
 
 
 @main.route("/")
+@login_required
 def dashboard():
     tickets = Ticket.query.all()
     categories = Category.query.order_by(Category.name).all()
@@ -34,6 +36,7 @@ def dashboard():
 
 
 @main.route("/board")
+@login_required
 def board():
     category_id = request.args.get("category", type=int)
     query = Ticket.query
@@ -56,6 +59,7 @@ def board():
 
 
 @main.route("/list")
+@login_required
 def ticket_list():
     status = request.args.get("status")
     priority = request.args.get("priority")
@@ -80,6 +84,7 @@ def ticket_list():
 
 
 @main.route("/ticket/new", methods=["GET", "POST"])
+@login_required
 def ticket_new():
     if request.method == "POST":
         ticket = _save_ticket(Ticket(), request.form)
@@ -93,6 +98,7 @@ def ticket_new():
 
 
 @main.route("/ticket/<int:ticket_id>/edit", methods=["GET", "POST"])
+@login_required
 def ticket_edit(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
     if request.method == "POST":
@@ -106,6 +112,7 @@ def ticket_edit(ticket_id):
 
 
 @main.route("/ticket/<int:ticket_id>/delete", methods=["POST"])
+@login_required
 def ticket_delete(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
     db.session.delete(ticket)
@@ -114,6 +121,7 @@ def ticket_delete(ticket_id):
 
 
 @main.route("/categories", methods=["GET", "POST"])
+@login_required
 def manage_categories():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
@@ -129,6 +137,7 @@ def manage_categories():
 
 
 @main.route("/categories/<int:cat_id>/delete", methods=["POST"])
+@login_required
 def delete_category(cat_id):
     cat = Category.query.get_or_404(cat_id)
     db.session.delete(cat)
@@ -140,6 +149,7 @@ def delete_category(cat_id):
 
 
 @api.route("/tickets/<int:ticket_id>/status", methods=["PATCH"])
+@login_required
 def update_status(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
     data = request.get_json()
@@ -153,6 +163,7 @@ def update_status(ticket_id):
 
 
 @api.route("/tickets", methods=["GET"])
+@login_required
 def list_tickets():
     tickets = Ticket.query.all()
     return jsonify([t.to_dict() for t in tickets])

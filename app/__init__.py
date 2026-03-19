@@ -1,11 +1,14 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_login import LoginManager
 from datetime import date
 import os
 
 db = SQLAlchemy()
 migrate = Migrate()
+login_manager = LoginManager()
+login_manager.login_view = "auth.login"
 
 
 def create_app():
@@ -17,12 +20,20 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    login_manager.init_app(app)
 
-    from app import models  # noqa: F401
+    from app.models import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
     from app.routes import main, api
+    from app.auth import auth
 
     app.register_blueprint(main)
     app.register_blueprint(api, url_prefix="/api")
+    app.register_blueprint(auth)
 
     @app.context_processor
     def inject_today():
@@ -30,5 +41,27 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _ensure_admin(app)
 
     return app
+
+
+def _ensure_admin(app):
+    """Create or update the admin user from environment variables."""
+    from app.models import User
+
+    username = os.environ.get("ADMIN_USERNAME", "admin")
+    password = os.environ.get("ADMIN_PASSWORD")
+    if not password:
+        return
+
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if not user.check_password(password):
+            user.set_password(password)
+            db.session.commit()
+    else:
+        user = User(username=username)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()

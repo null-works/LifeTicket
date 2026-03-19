@@ -18,10 +18,32 @@ command -v docker compose >/dev/null 2>&1 || docker compose version >/dev/null 2
 # --- Generate .env if missing ---
 if [ ! -f .env ]; then
   SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
-  echo "SECRET_KEY=${SECRET}" > .env
-  echo "Generated .env with random SECRET_KEY"
+
+  read -rp "Admin username [admin]: " ADMIN_USER
+  ADMIN_USER="${ADMIN_USER:-admin}"
+
+  while true; do
+    read -rsp "Admin password: " ADMIN_PASS
+    echo
+    if [ -z "$ADMIN_PASS" ]; then
+      echo "Password cannot be empty. Try again."
+    else
+      break
+    fi
+  done
+
+  cat > .env <<ENVFILE
+SECRET_KEY=${SECRET}
+ADMIN_USERNAME=${ADMIN_USER}
+ADMIN_PASSWORD=${ADMIN_PASS}
+ENVFILE
+  chmod 600 .env
+  echo "Generated .env with SECRET_KEY and admin credentials"
 else
   echo ".env already exists, skipping"
+  if ! grep -q ADMIN_PASSWORD .env; then
+    echo "WARNING: .env is missing ADMIN_PASSWORD — add it before deploying"
+  fi
 fi
 
 # --- Build and start the app ---
