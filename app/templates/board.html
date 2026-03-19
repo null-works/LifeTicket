@@ -2,96 +2,262 @@
 {% block title %}Board — LifeTicket{% endblock %}
 
 {% block content %}
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Board</h1>
-    <div class="flex items-center gap-2">
-        <select onchange="window.location.href='/board' + (this.value ? '?category=' + this.value : '')"
-                class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 px-3 py-1.5 border">
-            <option value="">All Categories</option>
-            {% for cat in categories %}
-            <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
-            {% endfor %}
-        </select>
-        <a href="/ticket/new" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">+ New</a>
-    </div>
-</div>
+<div x-data="kanbanBoard()" x-init="init()" class="-mx-4 -mt-6 flex flex-col" style="height: calc(100vh - 3.5rem - 3.5rem);">
 
-<!-- Kanban Columns -->
-<div class="flex gap-4 overflow-x-auto pb-4" x-data="boardDrag()">
-    {% for status, label, color in [('new', 'New', 'purple'), ('action_required', 'Action Required', 'blue'), ('awaiting_reply', 'Awaiting Reply', 'yellow'), ('on_hold', 'On Hold', 'gray'), ('done', 'Done', 'green'), ('cancelled', 'Cancelled', 'red')] %}
-    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 min-h-[200px] min-w-[260px] flex-1"
-         @dragover.prevent
-         @drop="dropTicket($event, '{{ status }}')">
-        <div class="flex items-center gap-2 mb-3 px-1">
-            <span class="w-2 h-2 rounded-full bg-{{ color }}-500"></span>
-            <h2 class="font-semibold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wide">{{ label }}</h2>
-            <span class="ml-auto bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium px-2 py-0.5 rounded-full">{{ columns[status] | length }}</span>
+    <!-- Top Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 bg-white/50 dark:bg-gray-900/50 border-b dark:border-gray-800 backdrop-blur-sm">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Board</h1>
+        <div class="flex items-center gap-2">
+            <select onchange="window.location.href='/board' + (this.value ? '?category=' + this.value : '')"
+                    class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 px-3 py-1.5 border">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <a href="/ticket/new" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition shadow-sm">+ New</a>
         </div>
-        <div class="space-y-2">
-            {% for ticket in columns[status] %}
-            <div class="bg-white dark:bg-gray-700 rounded-lg shadow-sm border dark:border-gray-600 p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition"
+    </div>
+
+    <!-- Kanban Columns -->
+    <div class="flex-1 flex gap-3 overflow-x-auto overflow-y-hidden px-4 py-4" id="kanban-container">
+        {% set all_columns = [
+            ('new', 'New', 'purple'),
+            ('action_required', 'Action Required', 'blue'),
+            ('awaiting_reply', 'Awaiting Reply', 'yellow'),
+            ('on_hold', 'On Hold', 'gray'),
+            ('done', 'Done', 'green'),
+            ('cancelled', 'Cancelled', 'red')
+        ] %}
+        {% for status, label, color in all_columns %}
+        <div class="kanban-column flex flex-col rounded-xl min-w-[280px] flex-1 bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/50"
+             data-status="{{ status }}"
+             @dragover.prevent="onDragOver($event)"
+             @dragleave="onDragLeave($event)"
+             @drop="onDrop($event, '{{ status }}')">
+
+            <!-- Column Header (draggable for reorder) -->
+            <div class="flex items-center gap-2 px-3 py-2.5 border-b border-gray-200 dark:border-gray-700/50 cursor-grab active:cursor-grabbing select-none"
                  draggable="true"
-                 @dragstart="dragStart($event, {{ ticket.id }})">
-                <div class="flex items-start gap-2">
-                    <span class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0
-                        {% if ticket.priority == 'urgent' %}bg-red-500
-                        {% elif ticket.priority == 'high' %}bg-orange-500
-                        {% elif ticket.priority == 'medium' %}bg-yellow-500
-                        {% else %}bg-gray-400{% endif %}"></span>
-                    <div class="min-w-0 flex-1">
-                        <a href="/ticket/{{ ticket.id }}/edit" class="text-sm font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-200 block truncate">
-                            {% if ticket.emoji %}{{ ticket.emoji }} {% endif %}{{ ticket.title }}
-                        </a>
-                        <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                            {% if ticket.category %}
-                            <span class="text-xs px-1.5 py-0.5 rounded-full text-white" style="background: {{ ticket.category.color }}">
-                                {{ ticket.category.name }}
-                            </span>
+                 @dragstart="dragColumnStart($event, '{{ status }}')"
+                 @dragend="dragColumnEnd($event)">
+                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0
+                    {% if color == 'purple' %}bg-purple-500
+                    {% elif color == 'blue' %}bg-blue-500
+                    {% elif color == 'yellow' %}bg-yellow-500
+                    {% elif color == 'gray' %}bg-gray-400
+                    {% elif color == 'green' %}bg-green-500
+                    {% elif color == 'red' %}bg-red-500
+                    {% endif %}"></span>
+                <h2 class="font-semibold text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wider flex-1">{{ label }}</h2>
+                <span class="bg-gray-200/80 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">{{ columns[status] | length }}</span>
+                <svg class="w-3.5 h-3.5 text-gray-400 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 10.001 4.001A2 2 0 007 2zm0 6a2 2 0 10.001 4.001A2 2 0 007 8zm0 6a2 2 0 10.001 4.001A2 2 0 007 14zm6-8a2 2 0 10-.001-4.001A2 2 0 0013 6zm0 2a2 2 0 10.001 4.001A2 2 0 0013 8zm0 6a2 2 0 10.001 4.001A2 2 0 0013 14z"/></svg>
+            </div>
+
+            <!-- Cards -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+                {% for ticket in columns[status] %}
+                <div class="ticket-card bg-white dark:bg-gray-750 dark:bg-[#2d3748] rounded-lg shadow-sm border border-gray-200 dark:border-gray-600/50 p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/50 transition-all group"
+                     draggable="true"
+                     @dragstart="dragCardStart($event, {{ ticket.id }})"
+                     @dragend="dragCardEnd($event)">
+                    <div class="flex items-start gap-2">
+                        <!-- Priority indicator -->
+                        <span class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ring-2
+                            {% if ticket.priority == 'urgent' %}bg-red-500 ring-red-200 dark:ring-red-900
+                            {% elif ticket.priority == 'high' %}bg-orange-500 ring-orange-200 dark:ring-orange-900
+                            {% elif ticket.priority == 'medium' %}bg-yellow-400 ring-yellow-200 dark:ring-yellow-900
+                            {% else %}bg-gray-300 ring-gray-100 dark:ring-gray-700{% endif %}"></span>
+                        <div class="min-w-0 flex-1">
+                            <a href="/ticket/{{ ticket.id }}/edit" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 dark:hover:text-brand-300 block leading-snug">
+                                {% if ticket.emoji %}<span class="mr-0.5">{{ ticket.emoji }}</span>{% endif %}{{ ticket.title }}
+                            </a>
+                            {% if ticket.category or ticket.tags %}
+                            <div class="flex flex-wrap items-center gap-1 mt-2">
+                                {% if ticket.category %}
+                                <span class="text-[11px] px-1.5 py-0.5 rounded-full text-white font-medium" style="background: {{ ticket.category.color }}">{{ ticket.category.name }}</span>
+                                {% endif %}
+                                {% for tag in ticket.tags %}
+                                <span class="text-[11px] bg-gray-100 dark:bg-gray-600/50 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded">#{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
                             {% endif %}
-                            {% for tag in ticket.tags %}
-                            <span class="text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">{{ tag.name }}</span>
-                            {% endfor %}
+                            {% if ticket.due_date %}
+                            <div class="flex items-center gap-1 mt-2 text-[11px]
+                                {% if ticket.due_date < today and ticket.status not in ['done', 'cancelled'] %}text-red-600 dark:text-red-400 font-semibold
+                                {% else %}text-gray-400 dark:text-gray-500{% endif %}">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                {{ ticket.due_date.strftime('%b %d') }}
+                            </div>
+                            {% endif %}
                         </div>
-                        {% if ticket.due_date %}
-                        <div class="text-xs mt-1.5
-                            {% if ticket.due_date < today and ticket.status not in ['done', 'cancelled'] %}text-red-600 dark:text-red-400 font-semibold
-                            {% else %}text-gray-400{% endif %}">
-                            Due {{ ticket.due_date.strftime('%b %d') }}
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
-
 {% endblock %}
 
 {% block scripts %}
+<style>
+    .kanban-column.drag-over-column {
+        outline: 2px dashed #6366f1;
+        outline-offset: -2px;
+        background: rgba(99, 102, 241, 0.05) !important;
+    }
+    .kanban-column.column-dragging {
+        opacity: 0.5;
+    }
+    .ticket-card.card-dragging {
+        opacity: 0.4;
+        transform: rotate(2deg);
+    }
+    /* Hide scrollbar but keep it scrollable */
+    #kanban-container { scrollbar-width: thin; }
+    #kanban-container::-webkit-scrollbar { height: 6px; }
+    #kanban-container::-webkit-scrollbar-track { background: transparent; }
+    #kanban-container::-webkit-scrollbar-thumb { background: rgba(156,163,175,0.3); border-radius: 3px; }
+
+    .kanban-column .overflow-y-auto { scrollbar-width: thin; }
+    .kanban-column .overflow-y-auto::-webkit-scrollbar { width: 4px; }
+    .kanban-column .overflow-y-auto::-webkit-scrollbar-track { background: transparent; }
+    .kanban-column .overflow-y-auto::-webkit-scrollbar-thumb { background: rgba(156,163,175,0.2); border-radius: 2px; }
+</style>
 <script>
-function boardDrag() {
+function kanbanBoard() {
+    const STORAGE_KEY = 'lifeticket-column-order';
+    const DEFAULT_ORDER = ['new', 'action_required', 'awaiting_reply', 'on_hold', 'done', 'cancelled'];
+
     return {
-        dragStart(e, ticketId) {
-            e.dataTransfer.setData('text/plain', ticketId);
-            e.dataTransfer.effectAllowed = 'move';
+        draggingCard: false,
+        draggingColumn: null,
+
+        init() {
+            this.applyColumnOrder();
         },
-        async dropTicket(e, newStatus) {
+
+        // --- Card drag (change ticket status) ---
+        dragCardStart(e, ticketId) {
+            this.draggingCard = true;
+            e.dataTransfer.setData('text/plain', ticketId);
+            e.dataTransfer.setData('type', 'card');
+            e.dataTransfer.effectAllowed = 'move';
+            e.target.classList.add('card-dragging');
+        },
+        dragCardEnd(e) {
+            this.draggingCard = false;
+            e.target.classList.remove('card-dragging');
+        },
+
+        // --- Column drag (reorder) ---
+        dragColumnStart(e, status) {
+            this.draggingColumn = status;
+            e.dataTransfer.setData('column-status', status);
+            e.dataTransfer.effectAllowed = 'move';
+            const col = e.target.closest('.kanban-column');
+            if (col) {
+                requestAnimationFrame(() => col.classList.add('column-dragging'));
+            }
+        },
+        dragColumnEnd(e) {
+            this.draggingColumn = null;
+            document.querySelectorAll('.kanban-column').forEach(c => {
+                c.classList.remove('column-dragging', 'drag-over-column');
+            });
+        },
+
+        onDragOver(e) {
+            const col = e.target.closest('.kanban-column');
+            if (!col) return;
+            if (this.draggingColumn) {
+                col.classList.add('drag-over-column');
+            } else if (this.draggingCard) {
+                col.classList.add('drag-over-column');
+            }
+        },
+        onDragLeave(e) {
+            const col = e.target.closest('.kanban-column');
+            if (!col) return;
+            // Only remove if we're actually leaving the column
+            if (!col.contains(e.relatedTarget)) {
+                col.classList.remove('drag-over-column');
+            }
+        },
+
+        async onDrop(e, targetStatus) {
+            const col = e.target.closest('.kanban-column');
+            if (col) col.classList.remove('drag-over-column');
+
+            // Column reorder
+            if (this.draggingColumn && this.draggingColumn !== targetStatus) {
+                this.reorderColumns(this.draggingColumn, targetStatus);
+                this.draggingColumn = null;
+                return;
+            }
+
+            // Card status change
             const ticketId = e.dataTransfer.getData('text/plain');
+            if (!ticketId) return;
             try {
                 const res = await fetch(`/api/tickets/${ticketId}/status`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus })
+                    body: JSON.stringify({ status: targetStatus })
                 });
                 if (res.ok) location.reload();
             } catch (err) {
                 console.error('Failed to update status:', err);
             }
+        },
+
+        reorderColumns(fromStatus, toStatus) {
+            const container = document.getElementById('kanban-container');
+            const cols = [...container.querySelectorAll('.kanban-column')];
+            const fromCol = cols.find(c => c.dataset.status === fromStatus);
+            const toCol = cols.find(c => c.dataset.status === toStatus);
+            if (!fromCol || !toCol) return;
+
+            const fromIdx = cols.indexOf(fromCol);
+            const toIdx = cols.indexOf(toCol);
+
+            if (fromIdx < toIdx) {
+                container.insertBefore(fromCol, toCol.nextSibling);
+            } else {
+                container.insertBefore(fromCol, toCol);
+            }
+
+            this.saveColumnOrder();
+        },
+
+        applyColumnOrder() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+            try {
+                const order = JSON.parse(saved);
+                const container = document.getElementById('kanban-container');
+                const cols = [...container.querySelectorAll('.kanban-column')];
+                const colMap = {};
+                cols.forEach(c => colMap[c.dataset.status] = c);
+
+                order.forEach(status => {
+                    if (colMap[status]) container.appendChild(colMap[status]);
+                });
+                // Append any columns not in saved order
+                cols.forEach(c => {
+                    if (!order.includes(c.dataset.status)) container.appendChild(c);
+                });
+            } catch {}
+        },
+
+        saveColumnOrder() {
+            const container = document.getElementById('kanban-container');
+            const order = [...container.querySelectorAll('.kanban-column')].map(c => c.dataset.status);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
         }
-    }
+    };
 }
 </script>
 {% endblock %}
