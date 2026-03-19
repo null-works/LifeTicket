@@ -1,14 +1,30 @@
 services:
   lifeticket:
     build: .
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     volumes:
       - lifeticket-data:/data
     environment:
-      - SECRET_KEY=change-me-in-production
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - DATABASE_URL=sqlite:////data/lifeticket.db
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - lifeticket
     restart: unless-stopped
 
 volumes:
   lifeticket-data:
+  caddy-data:
+  caddy-config:
