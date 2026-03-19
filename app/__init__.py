@@ -36,8 +36,9 @@ def create_app():
     app.register_blueprint(auth)
 
     @app.context_processor
-    def inject_today():
-        return {"today": date.today()}
+    def inject_globals():
+        from app.version import VERSION
+        return {"today": date.today(), "version": VERSION}
 
     with app.app_context():
         db.create_all()
