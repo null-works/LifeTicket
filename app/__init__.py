@@ -42,9 +42,26 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _migrate_statuses()
         _ensure_admin(app)
 
     return app
+
+
+def _migrate_statuses():
+    """Remap old ticket statuses to the new set."""
+    from app.models import Ticket
+
+    mapping = {"todo": "action_required", "in_progress": "action_required"}
+    changed = 0
+    for old, new in mapping.items():
+        rows = Ticket.query.filter_by(status=old).all()
+        for t in rows:
+            t.status = new
+            changed += 1
+    if changed:
+        db.session.commit()
+        print(f"[LifeTicket] Migrated {changed} ticket(s) to new statuses")
 
 
 def _ensure_admin(app):

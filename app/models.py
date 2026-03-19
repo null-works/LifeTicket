@@ -44,7 +44,7 @@ class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, default="")
-    status = db.Column(db.String(20), default="todo")  # todo, in_progress, done
+    status = db.Column(db.String(20), default="new")  # new, action_required, awaiting_reply, on_hold, done, cancelled
     priority = db.Column(db.String(10), default="medium")  # low, medium, high, urgent
     due_date = db.Column(db.Date, nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)

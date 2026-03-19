@@ -8,22 +8,36 @@
 </div>
 
 <!-- Stats Grid -->
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Total</div>
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
-        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ stats.todo }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">To Do</div>
+        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ stats.new }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">New</div>
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
-        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ stats.in_progress }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">In Progress</div>
+        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ stats.action_required }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Action Required</div>
     </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ stats.awaiting_reply }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Awaiting Reply</div>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ stats.on_hold }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">On Hold</div>
+    </div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
         <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ stats.done }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Done</div>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats.cancelled }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Cancelled</div>
     </div>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
         <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats.overdue }}</div>
@@ -60,7 +74,7 @@
                     </div>
                 </div>
                 {% if ticket.due_date %}
-                <span class="text-xs {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 dark:text-red-400 font-semibold{% else %}text-gray-400{% endif %}">
+                <span class="text-xs {% if ticket.due_date < today and ticket.status not in ['done', 'cancelled'] %}text-red-600 dark:text-red-400 font-semibold{% else %}text-gray-400{% endif %}">
                     {{ ticket.due_date.strftime('%b %d') }}
                 </span>
                 {% endif %}

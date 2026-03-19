@@ -18,17 +18,21 @@ def dashboard():
     categories = Category.query.order_by(Category.name).all()
     today = date.today()
 
+    closed = {"done", "cancelled"}
     stats = {
         "total": len(tickets),
-        "todo": sum(1 for t in tickets if t.status == "todo"),
-        "in_progress": sum(1 for t in tickets if t.status == "in_progress"),
+        "new": sum(1 for t in tickets if t.status == "new"),
+        "action_required": sum(1 for t in tickets if t.status == "action_required"),
+        "awaiting_reply": sum(1 for t in tickets if t.status == "awaiting_reply"),
+        "on_hold": sum(1 for t in tickets if t.status == "on_hold"),
         "done": sum(1 for t in tickets if t.status == "done"),
+        "cancelled": sum(1 for t in tickets if t.status == "cancelled"),
         "overdue": sum(
             1
             for t in tickets
-            if t.due_date and t.due_date < today and t.status != "done"
+            if t.due_date and t.due_date < today and t.status not in closed
         ),
-        "urgent": sum(1 for t in tickets if t.priority == "urgent" and t.status != "done"),
+        "urgent": sum(1 for t in tickets if t.priority == "urgent" and t.status not in closed),
     }
     return render_template(
         "dashboard.html", stats=stats, categories=categories, tickets=tickets
@@ -46,9 +50,12 @@ def board():
     tickets = query.all()
     categories = Category.query.order_by(Category.name).all()
     columns = {
-        "todo": [t for t in tickets if t.status == "todo"],
-        "in_progress": [t for t in tickets if t.status == "in_progress"],
+        "new": [t for t in tickets if t.status == "new"],
+        "action_required": [t for t in tickets if t.status == "action_required"],
+        "awaiting_reply": [t for t in tickets if t.status == "awaiting_reply"],
+        "on_hold": [t for t in tickets if t.status == "on_hold"],
         "done": [t for t in tickets if t.status == "done"],
+        "cancelled": [t for t in tickets if t.status == "cancelled"],
     }
     return render_template(
         "board.html",
@@ -154,7 +161,7 @@ def update_status(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
     data = request.get_json()
     new_status = data.get("status")
-    if new_status in ("todo", "in_progress", "done"):
+    if new_status in ("new", "action_required", "awaiting_reply", "on_hold", "done", "cancelled"):
         ticket.status = new_status
         ticket.updated_at = datetime.now()
         db.session.commit()
@@ -175,7 +182,7 @@ def list_tickets():
 def _save_ticket(ticket, form):
     ticket.title = form.get("title", "").strip()
     ticket.description = form.get("description", "").strip()
-    ticket.status = form.get("status", "todo")
+    ticket.status = form.get("status", "new")
     ticket.priority = form.get("priority", "medium")
 
     due = form.get("due_date")

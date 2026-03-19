@@ -17,9 +17,9 @@
 </div>
 
 <!-- Kanban Columns -->
-<div class="grid md:grid-cols-3 gap-4" x-data="boardDrag()">
-    {% for status, label, color in [('todo', 'To Do', 'blue'), ('in_progress', 'In Progress', 'yellow'), ('done', 'Done', 'green')] %}
-    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 min-h-[200px]"
+<div class="flex gap-4 overflow-x-auto pb-4" x-data="boardDrag()">
+    {% for status, label, color in [('new', 'New', 'purple'), ('action_required', 'Action Required', 'blue'), ('awaiting_reply', 'Awaiting Reply', 'yellow'), ('on_hold', 'On Hold', 'gray'), ('done', 'Done', 'green'), ('cancelled', 'Cancelled', 'red')] %}
+    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl p-3 min-h-[200px] min-w-[260px] flex-1"
          @dragover.prevent
          @drop="dropTicket($event, '{{ status }}')">
         <div class="flex items-center gap-2 mb-3 px-1">
@@ -54,7 +54,7 @@
                         </div>
                         {% if ticket.due_date %}
                         <div class="text-xs mt-1.5
-                            {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 dark:text-red-400 font-semibold
+                            {% if ticket.due_date < today and ticket.status not in ['done', 'cancelled'] %}text-red-600 dark:text-red-400 font-semibold
                             {% else %}text-gray-400{% endif %}">
                             Due {{ ticket.due_date.strftime('%b %d') }}
                         </div>

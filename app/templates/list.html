@@ -16,9 +16,12 @@
     <form method="GET" action="/list" class="md:flex md:items-center md:gap-3" :class="open ? 'mt-3 space-y-2' : 'hidden md:flex'">
         <select name="status" class="w-full md:w-auto text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-1.5 border">
             <option value="">All Statuses</option>
-            <option value="todo" {% if request.args.get('status') == 'todo' %}selected{% endif %}>To Do</option>
-            <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="new" {% if request.args.get('status') == 'new' %}selected{% endif %}>New</option>
+            <option value="action_required" {% if request.args.get('status') == 'action_required' %}selected{% endif %}>Action Required</option>
+            <option value="awaiting_reply" {% if request.args.get('status') == 'awaiting_reply' %}selected{% endif %}>Awaiting Reply</option>
+            <option value="on_hold" {% if request.args.get('status') == 'on_hold' %}selected{% endif %}>On Hold</option>
             <option value="done" {% if request.args.get('status') == 'done' %}selected{% endif %}>Done</option>
+            <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
         </select>
         <select name="priority" class="w-full md:w-auto text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-1.5 border">
             <option value="">All Priorities</option>
@@ -60,8 +63,11 @@
                         {{ ticket.title }}
                     </a>
                     <span class="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium
-                        {% if ticket.status == 'todo' %}bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300
-                        {% elif ticket.status == 'in_progress' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300
+                        {% if ticket.status == 'new' %}bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300
+                        {% elif ticket.status == 'action_required' %}bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300
+                        {% elif ticket.status == 'awaiting_reply' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300
+                        {% elif ticket.status == 'on_hold' %}bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300
+                        {% elif ticket.status == 'cancelled' %}bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300
                         {% else %}bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300{% endif %}">
                         {{ ticket.status | replace('_', ' ') | title }}
                     </span>
@@ -78,7 +84,7 @@
                     {% endfor %}
                     {% if ticket.due_date %}
                     <span class="text-xs
-                        {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 dark:text-red-400 font-semibold
+                        {% if ticket.due_date < today and ticket.status not in ['done', 'cancelled'] %}text-red-600 dark:text-red-400 font-semibold
                         {% else %}text-gray-400{% endif %}">
                         Due {{ ticket.due_date.strftime('%b %d, %Y') }}
                     </span>
