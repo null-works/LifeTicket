@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LifeTicket{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='icons/icon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
+                            500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="h-full bg-gray-50" x-data="{ mobileMenu: false }">
+
+    <!-- Top Nav -->
+    <nav class="bg-brand-600 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-14">
+                <a href="/" class="text-white font-bold text-lg tracking-tight">LifeTicket</a>
+
+                <!-- Desktop nav -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="/" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Dashboard</a>
+                    <a href="/board" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Board</a>
+                    <a href="/list" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">List</a>
+                    <a href="/categories" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Categories</a>
+                    <a href="/ticket/new" class="ml-2 bg-white text-brand-600 hover:bg-brand-50 px-3 py-1.5 rounded-lg text-sm font-semibold transition">+ New Ticket</a>
+                </div>
+
+                <!-- Mobile hamburger -->
+                <button @click="mobileMenu = !mobileMenu" class="md:hidden text-white p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path x-show="!mobileMenu" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        <path x-show="mobileMenu" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div x-show="mobileMenu" x-cloak @click.away="mobileMenu = false"
+             x-transition class="md:hidden bg-brand-700 border-t border-brand-500">
+            <div class="px-4 py-3 space-y-1">
+                <a href="/" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Dashboard</a>
+                <a href="/board" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Board</a>
+                <a href="/list" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">List</a>
+                <a href="/categories" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Categories</a>
+                <a href="/ticket/new" class="block bg-white text-brand-600 px-3 py-2 rounded-lg text-sm font-semibold text-center mt-2">+ New Ticket</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Board — LifeTicket{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Board</h1>
+    <div class="flex items-center gap-2">
+        <select onchange="window.location.href='/board' + (this.value ? '?category=' + this.value : '')"
+                class="text-sm border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 px-3 py-1.5 border">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <a href="/ticket/new" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">+ New</a>
+    </div>
+</div>
+
+<!-- Kanban Columns -->
+<div class="grid md:grid-cols-3 gap-4" x-data="boardDrag()">
+    {% for status, label, color in [('todo', 'To Do', 'blue'), ('in_progress', 'In Progress', 'yellow'), ('done', 'Done', 'green')] %}
+    <div class="bg-gray-100 rounded-xl p-3 min-h-[200px]"
+         @dragover.prevent
+         @drop="dropTicket($event, '{{ status }}')">
+        <div class="flex items-center gap-2 mb-3 px-1">
+            <span class="w-2 h-2 rounded-full bg-{{ color }}-500"></span>
+            <h2 class="font-semibold text-sm text-gray-700 uppercase tracking-wide">{{ label }}</h2>
+            <span class="ml-auto bg-gray-200 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">{{ columns[status] | length }}</span>
+        </div>
+        <div class="space-y-2">
+            {% for ticket in columns[status] %}
+            <div class="bg-white rounded-lg shadow-sm border p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition"
+                 draggable="true"
+                 @dragstart="dragStart($event, {{ ticket.id }})">
+                <div class="flex items-start gap-2">
+                    <span class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0
+                        {% if ticket.priority == 'urgent' %}bg-red-500
+                        {% elif ticket.priority == 'high' %}bg-orange-500
+                        {% elif ticket.priority == 'medium' %}bg-yellow-500
+                        {% else %}bg-gray-400{% endif %}"></span>
+                    <div class="min-w-0 flex-1">
+                        <a href="/ticket/{{ ticket.id }}/edit" class="text-sm font-medium text-gray-900 hover:text-brand-600 block truncate">
+                            {{ ticket.title }}
+                        </a>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                            {% if ticket.category %}
+                            <span class="text-xs px-1.5 py-0.5 rounded-full text-white" style="background: {{ ticket.category.color }}">
+                                {{ ticket.category.name }}
+                            </span>
+                            {% endif %}
+                            {% for tag in ticket.tags %}
+                            <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                        {% if ticket.due_date %}
+                        <div class="text-xs mt-1.5
+                            {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 font-semibold
+                            {% else %}text-gray-400{% endif %}">
+                            Due {{ ticket.due_date.strftime('%b %d') }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function boardDrag() {
+    return {
+        dragStart(e, ticketId) {
+            e.dataTransfer.setData('text/plain', ticketId);
+            e.dataTransfer.effectAllowed = 'move';
+        },
+        async dropTicket(e, newStatus) {
+            const ticketId = e.dataTransfer.getData('text/plain');
+            try {
+                const res = await fetch(`/api/tickets/${ticketId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (res.ok) location.reload();
+            } catch (err) {
+                console.error('Failed to update status:', err);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

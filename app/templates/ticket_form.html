@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Ticket' if ticket else 'New Ticket' }} — LifeTicket{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">{{ 'Edit Ticket' if ticket else 'New Ticket' }}</h1>
+        {% if ticket %}
+        <form method="POST" action="/ticket/{{ ticket.id }}/delete" onsubmit="return confirm('Delete this ticket?')">
+            <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <form method="POST" class="bg-white rounded-xl shadow-sm border p-6 space-y-5">
+        <!-- Title -->
+        <div>
+            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input type="text" name="title" id="title" required
+                   value="{{ ticket.title if ticket else '' }}"
+                   class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border"
+                   placeholder="What needs to be done?">
+        </div>
+
+        <!-- Description -->
+        <div>
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea name="description" id="description" rows="4"
+                      class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border"
+                      placeholder="Add details...">{{ ticket.description if ticket else '' }}</textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Status -->
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" id="status" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border">
+                    {% for val, label in [('todo', 'To Do'), ('in_progress', 'In Progress'), ('done', 'Done')] %}
+                    <option value="{{ val }}" {% if ticket and ticket.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Priority -->
+            <div>
+                <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <select name="priority" id="priority" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border">
+                    {% for val, label in [('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('urgent', 'Urgent')] %}
+                    <option value="{{ val }}" {% if ticket and ticket.priority == val %}selected{% elif not ticket and val == 'medium' %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Category -->
+            <div>
+                <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select name="category_id" id="category_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border">
+                    <option value="">None</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if ticket and ticket.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Due Date -->
+            <div>
+                <label for="due_date" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                <input type="date" name="due_date" id="due_date"
+                       value="{{ ticket.due_date.isoformat() if ticket and ticket.due_date else '' }}"
+                       class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border">
+            </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+            <label for="tags" class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <input type="text" name="tags" id="tags"
+                   value="{{ ticket.tags | map(attribute='name') | join(', ') if ticket else '' }}"
+                   class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border"
+                   placeholder="Comma-separated (e.g. errand, quick-win)">
+            <p class="text-xs text-gray-400 mt-1">Separate multiple tags with commas</p>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="bg-brand-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">
+                {{ 'Save Changes' if ticket else 'Create Ticket' }}
+            </button>
+            <a href="/board" class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

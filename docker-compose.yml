@@ -1,0 +1,14 @@
+services:
+  lifeticket:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - lifeticket-data:/data
+    environment:
+      - SECRET_KEY=change-me-in-production
+      - DATABASE_URL=sqlite:////data/lifeticket.db
+    restart: unless-stopped
+
+volumes:
+  lifeticket-data:
