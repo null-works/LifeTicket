@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required
 from app import db
-from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent
+from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status
 from datetime import date, datetime, time
 import calendar as cal_mod
 
@@ -17,26 +17,27 @@ api = Blueprint("api", __name__)
 def dashboard():
     tickets = Ticket.query.all()
     categories = Category.query.order_by(Category.name).all()
+    statuses = Status.query.order_by(Status.position).all()
     today = date.today()
 
-    closed = {"done", "cancelled"}
+    closed_names = {s.name for s in statuses if s.is_closed}
+    status_counts = {s.name: 0 for s in statuses}
+    for t in tickets:
+        if t.status in status_counts:
+            status_counts[t.status] += 1
+
     stats = {
         "total": len(tickets),
-        "new": sum(1 for t in tickets if t.status == "new"),
-        "action_required": sum(1 for t in tickets if t.status == "action_required"),
-        "awaiting_reply": sum(1 for t in tickets if t.status == "awaiting_reply"),
-        "on_hold": sum(1 for t in tickets if t.status == "on_hold"),
-        "done": sum(1 for t in tickets if t.status == "done"),
-        "cancelled": sum(1 for t in tickets if t.status == "cancelled"),
         "overdue": sum(
             1
             for t in tickets
-            if t.due_date and t.due_date < today and t.status not in closed
+            if t.due_date and t.due_date < today and t.status not in closed_names
         ),
-        "urgent": sum(1 for t in tickets if t.priority == "urgent" and t.status not in closed),
+        "urgent": sum(1 for t in tickets if t.priority == "urgent" and t.status not in closed_names),
     }
     return render_template(
-        "dashboard.html", stats=stats, categories=categories, tickets=tickets
+        "dashboard.html", stats=stats, statuses=statuses, status_counts=status_counts,
+        categories=categories, tickets=tickets,
     )
 
 
@@ -50,17 +51,12 @@ def board():
 
     tickets = query.all()
     categories = Category.query.order_by(Category.name).all()
-    columns = {
-        "new": [t for t in tickets if t.status == "new"],
-        "action_required": [t for t in tickets if t.status == "action_required"],
-        "awaiting_reply": [t for t in tickets if t.status == "awaiting_reply"],
-        "on_hold": [t for t in tickets if t.status == "on_hold"],
-        "done": [t for t in tickets if t.status == "done"],
-        "cancelled": [t for t in tickets if t.status == "cancelled"],
-    }
+    statuses = Status.query.order_by(Status.position).all()
+    columns = {s.name: [t for t in tickets if t.status == s.name] for s in statuses}
     return render_template(
         "board.html",
         columns=columns,
+        statuses=statuses,
         categories=categories,
         selected_category=category_id,
     )
@@ -88,7 +84,8 @@ def ticket_list():
 
     tickets = query.all()
     categories = Category.query.order_by(Category.name).all()
-    return render_template("list.html", tickets=tickets, categories=categories)
+    statuses = Status.query.order_by(Status.position).all()
+    return render_template("list.html", tickets=tickets, categories=categories, statuses=statuses)
 
 
 @main.route("/ticket/new", methods=["GET", "POST"])
@@ -102,7 +99,8 @@ def ticket_new():
 
     categories = Category.query.order_by(Category.name).all()
     tags = Tag.query.order_by(Tag.name).all()
-    return render_template("ticket_form.html", ticket=None, categories=categories, tags=tags)
+    statuses = Status.query.order_by(Status.position).all()
+    return render_template("ticket_form.html", ticket=None, categories=categories, tags=tags, statuses=statuses)
 
 
 @main.route("/ticket/<int:ticket_id>/edit", methods=["GET", "POST"])
@@ -116,7 +114,8 @@ def ticket_edit(ticket_id):
 
     categories = Category.query.order_by(Category.name).all()
     tags = Tag.query.order_by(Tag.name).all()
-    return render_template("ticket_form.html", ticket=ticket, categories=categories, tags=tags)
+    statuses = Status.query.order_by(Status.position).all()
+    return render_template("ticket_form.html", ticket=ticket, categories=categories, tags=tags, statuses=statuses)
 
 
 @main.route("/ticket/<int:ticket_id>/delete", methods=["POST"])
@@ -151,6 +150,52 @@ def delete_category(cat_id):
     db.session.delete(cat)
     db.session.commit()
     return redirect(url_for("main.manage_categories"))
+
+
+@main.route("/statuses", methods=["GET", "POST"])
+@login_required
+def manage_statuses():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip().lower().replace(" ", "_")
+        label = request.form.get("label", "").strip()
+        color = request.form.get("color", "#6366f1")
+        is_closed = request.form.get("is_closed") == "on"
+        if name and label and not Status.query.filter_by(name=name).first():
+            max_pos = db.session.query(db.func.max(Status.position)).scalar() or 0
+            s = Status(name=name, label=label, color=color, is_closed=is_closed, position=max_pos + 1)
+            db.session.add(s)
+            db.session.commit()
+        return redirect(url_for("main.manage_statuses"))
+
+    statuses = Status.query.order_by(Status.position).all()
+    return render_template("statuses.html", statuses=statuses)
+
+
+@main.route("/statuses/<int:status_id>/delete", methods=["POST"])
+@login_required
+def delete_status(status_id):
+    status = Status.query.get_or_404(status_id)
+    # Re-assign any tickets with this status to the first available status
+    fallback = Status.query.filter(Status.id != status_id).order_by(Status.position).first()
+    if fallback:
+        Ticket.query.filter_by(status=status.name).update({"status": fallback.name})
+    db.session.delete(status)
+    db.session.commit()
+    return redirect(url_for("main.manage_statuses"))
+
+
+@main.route("/statuses/reorder", methods=["POST"])
+@login_required
+def reorder_statuses():
+    order = request.get_json()
+    if order and isinstance(order, list):
+        for i, status_id in enumerate(order):
+            s = Status.query.get(status_id)
+            if s:
+                s.position = i
+        db.session.commit()
+        return jsonify({"ok": True})
+    return jsonify({"error": "Invalid data"}), 400
 
 
 @main.route("/grocery", methods=["GET", "POST"])
@@ -215,7 +260,7 @@ def calendar_view():
     tickets = Ticket.query.filter(
         Ticket.due_date >= grid_dates[0],
         Ticket.due_date <= grid_dates[-1],
-        Ticket.status.notin_(["done", "cancelled"]),
+        Ticket.status.notin_([s.name for s in Status.query.filter_by(is_closed=True).all()]),
     ).order_by(Ticket.due_date).all()
 
     # Build lookup: date -> list of items
@@ -273,7 +318,8 @@ def update_status(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
     data = request.get_json()
     new_status = data.get("status")
-    if new_status in ("new", "action_required", "awaiting_reply", "on_hold", "done", "cancelled"):
+    valid = Status.query.filter_by(name=new_status).first()
+    if valid:
         ticket.status = new_status
         ticket.updated_at = datetime.now()
         db.session.commit()

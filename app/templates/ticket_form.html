@@ -53,8 +53,8 @@
             <div>
                 <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                 <select name="status" id="status" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border">
-                    {% for val, label in [('new', 'New'), ('action_required', 'Action Required'), ('awaiting_reply', 'Awaiting Reply'), ('on_hold', 'On Hold'), ('done', 'Done'), ('cancelled', 'Cancelled')] %}
-                    <option value="{{ val }}" {% if ticket and ticket.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% for s in statuses %}
+                    <option value="{{ s.name }}" {% if ticket and ticket.status == s.name %}selected{% endif %}>{{ s.label }}</option>
                     {% endfor %}
                 </select>
             </div>

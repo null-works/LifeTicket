@@ -83,12 +83,35 @@ class CalendarEvent(db.Model):
         }
 
 
+class Status(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30), nullable=False, unique=True)  # internal key e.g. "action_required"
+    label = db.Column(db.String(50), nullable=False)  # display label e.g. "Action Required"
+    color = db.Column(db.String(7), default="#6366f1")  # hex color for board dot & badge
+    is_closed = db.Column(db.Boolean, default=False)  # closed statuses (done, cancelled, etc.)
+    position = db.Column(db.Integer, default=0)  # column ordering on board
+    tickets = db.relationship(
+        "Ticket", primaryjoin="Status.name == foreign(Ticket.status)",
+        backref="status_obj", lazy=True,
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "label": self.label,
+            "color": self.color,
+            "is_closed": self.is_closed,
+            "position": self.position,
+        }
+
+
 class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     emoji = db.Column(db.String(10), default="")
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, default="")
-    status = db.Column(db.String(20), default="new")  # new, action_required, awaiting_reply, on_hold, done, cancelled
+    status = db.Column(db.String(30), default="new")
     priority = db.Column(db.String(10), default="medium")  # low, medium, high, urgent
     due_date = db.Column(db.Date, nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)

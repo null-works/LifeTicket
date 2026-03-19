@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Statuses — LifeTicket{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Statuses</h1>
+
+    <!-- Add Status -->
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 mb-6">
+        <div class="space-y-3">
+            <div class="flex items-end gap-3">
+                <div class="flex-1">
+                    <label for="label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Display Name</label>
+                    <input type="text" name="label" id="label" required
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border"
+                           placeholder="e.g. In Progress, Blocked">
+                </div>
+                <div>
+                    <label for="color" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                    <input type="color" name="color" id="color" value="#6366f1"
+                           class="w-10 h-9 rounded border border-gray-300 dark:border-gray-600 cursor-pointer">
+                </div>
+            </div>
+            <div class="flex items-end gap-3">
+                <div class="flex-1">
+                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Internal Key</label>
+                    <input type="text" name="name" id="name" required pattern="[a-z0-9_]+"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border"
+                           placeholder="e.g. in_progress, blocked">
+                    <p class="text-xs text-gray-400 mt-1">Lowercase, underscores only — auto-generated from name</p>
+                </div>
+                <label class="flex items-center gap-2 pb-2 cursor-pointer">
+                    <input type="checkbox" name="is_closed" class="rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Closed</span>
+                </label>
+                <button type="submit" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">Add</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Status List (drag to reorder) -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 divide-y dark:divide-gray-700"
+         x-data="statusList()" id="status-list">
+        {% for s in statuses %}
+        <div class="flex items-center gap-3 px-5 py-3 cursor-grab active:cursor-grabbing"
+             draggable="true" data-id="{{ s.id }}"
+             @dragstart="dragStart($event, {{ s.id }})"
+             @dragend="dragEnd($event)"
+             @dragover.prevent="dragOver($event)"
+             @drop="drop($event, {{ s.id }})">
+            <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 10.001 4.001A2 2 0 007 2zm0 6a2 2 0 10.001 4.001A2 2 0 007 8zm0 6a2 2 0 10.001 4.001A2 2 0 007 14zm6-8a2 2 0 10-.001-4.001A2 2 0 0013 6zm0 2a2 2 0 10.001 4.001A2 2 0 0013 8zm0 6a2 2 0 10.001 4.001A2 2 0 0013 14z"/></svg>
+            <span class="w-4 h-4 rounded-full flex-shrink-0" style="background: {{ s.color }}"></span>
+            <span class="font-medium text-gray-900 dark:text-white flex-1">{{ s.label }}</span>
+            <code class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ s.name }}</code>
+            {% if s.is_closed %}
+            <span class="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">Closed</span>
+            {% endif %}
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ s.tickets | length }}</span>
+            <form method="POST" action="/statuses/{{ s.id }}/delete" onsubmit="return confirm('Delete this status? Tickets will be moved to the first remaining status.')">
+                <button type="submit" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm">Delete</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="px-5 py-8 text-center text-gray-400 text-sm">
+            No statuses yet. Add one above!
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-generate internal key from display name
+document.getElementById('label').addEventListener('input', function() {
+    const nameInput = document.getElementById('name');
+    if (!nameInput.dataset.manual) {
+        nameInput.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    }
+});
+document.getElementById('name').addEventListener('input', function() {
+    this.dataset.manual = '1';
+});
+
+function statusList() {
+    return {
+        draggingId: null,
+        dragStart(e, id) {
+            this.draggingId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            e.target.style.opacity = '0.5';
+        },
+        dragEnd(e) {
+            this.draggingId = null;
+            e.target.style.opacity = '1';
+        },
+        dragOver(e) {
+            e.dataTransfer.dropEffect = 'move';
+        },
+        drop(e, targetId) {
+            if (this.draggingId === targetId) return;
+            const list = document.getElementById('status-list');
+            const items = [...list.querySelectorAll('[data-id]')];
+            const from = items.find(el => el.dataset.id == this.draggingId);
+            const to = items.find(el => el.dataset.id == targetId);
+            if (!from || !to) return;
+            list.insertBefore(from, to);
+            // Save new order
+            const order = [...list.querySelectorAll('[data-id]')].map(el => parseInt(el.dataset.id));
+            fetch('/statuses/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(order)
+            });
+        }
+    };
+}
+</script>
+{% endblock %}

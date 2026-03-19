@@ -43,6 +43,7 @@ def create_app():
     with app.app_context():
         db.create_all()
         _add_missing_columns()
+        _seed_statuses()
         _migrate_statuses()
         _ensure_admin(app)
 
@@ -58,6 +59,24 @@ def _add_missing_columns():
         db.session.execute(text("ALTER TABLE ticket ADD COLUMN emoji VARCHAR(10) DEFAULT ''"))
         db.session.commit()
         print("[LifeTicket] Added 'emoji' column to ticket table")
+
+
+def _seed_statuses():
+    """Ensure default statuses exist in the Status table."""
+    from app.models import Status
+
+    defaults = [
+        ("new", "New", "#a855f7", False, 0),
+        ("action_required", "Action Required", "#3b82f6", False, 1),
+        ("awaiting_reply", "Awaiting Reply", "#eab308", False, 2),
+        ("on_hold", "On Hold", "#6b7280", False, 3),
+        ("done", "Done", "#22c55e", True, 4),
+        ("cancelled", "Cancelled", "#ef4444", True, 5),
+    ]
+    for name, label, color, is_closed, position in defaults:
+        if not Status.query.filter_by(name=name).first():
+            db.session.add(Status(name=name, label=label, color=color, is_closed=is_closed, position=position))
+    db.session.commit()
 
 
 def _migrate_statuses():
