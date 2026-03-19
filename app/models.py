@@ -42,6 +42,7 @@ class Tag(db.Model):
 
 class Ticket(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    emoji = db.Column(db.String(10), default="")
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, default="")
     status = db.Column(db.String(20), default="new")  # new, action_required, awaiting_reply, on_hold, done, cancelled
@@ -59,6 +60,7 @@ class Ticket(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "emoji": self.emoji or "",
             "title": self.title,
             "description": self.description,
             "status": self.status,

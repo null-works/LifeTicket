@@ -40,7 +40,7 @@
                         {% else %}bg-gray-400{% endif %}"></span>
                     <div class="min-w-0 flex-1">
                         <a href="/ticket/{{ ticket.id }}/edit" class="text-sm font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-200 block truncate">
-                            {{ ticket.title }}
+                            {% if ticket.emoji %}{{ ticket.emoji }} {% endif %}{{ ticket.title }}
                         </a>
                         <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                             {% if ticket.category %}

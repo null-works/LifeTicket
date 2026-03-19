@@ -67,7 +67,7 @@
                     {% elif ticket.priority == 'medium' %}bg-yellow-500
                     {% else %}bg-gray-400{% endif %}"></span>
                 <div class="min-w-0 flex-1">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ ticket.title }}</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{% if ticket.emoji %}{{ ticket.emoji }} {% endif %}{{ ticket.title }}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">
                         {{ ticket.status | replace('_', ' ') | title }}
                         {% if ticket.category %} · {{ ticket.category.name }}{% endif %}

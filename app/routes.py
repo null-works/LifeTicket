@@ -180,6 +180,7 @@ def list_tickets():
 
 
 def _save_ticket(ticket, form):
+    ticket.emoji = form.get("emoji", "").strip()
     ticket.title = form.get("title", "").strip()
     ticket.description = form.get("description", "").strip()
     ticket.status = form.get("status", "new")

@@ -13,13 +13,31 @@
     </div>
 
     <form method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6 space-y-5">
-        <!-- Title -->
+        <!-- Emoji + Title -->
         <div>
             <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-            <input type="text" name="title" id="title" required
-                   value="{{ ticket.title if ticket else '' }}"
-                   class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border"
-                   placeholder="What needs to be done?">
+            <div class="flex gap-2">
+                <div class="relative" x-data="{ open: false }">
+                    <button type="button" @click="open = !open"
+                            class="h-[38px] w-[46px] border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg text-lg flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                        <span id="emoji-preview">{{ ticket.emoji if ticket and ticket.emoji else '😀' }}</span>
+                    </button>
+                    <input type="hidden" name="emoji" id="emoji-input" value="{{ ticket.emoji if ticket and ticket.emoji else '' }}">
+                    <div x-show="open" x-cloak @click.away="open = false"
+                         class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-xl shadow-lg p-3 z-50 w-[280px]">
+                        <div class="grid grid-cols-8 gap-1 max-h-[200px] overflow-y-auto text-lg" id="emoji-grid">
+                        </div>
+                        <div class="mt-2 pt-2 border-t dark:border-gray-700 flex gap-1">
+                            <button type="button" @click="document.getElementById('emoji-input').value = ''; document.getElementById('emoji-preview').textContent = '😀'; open = false"
+                                    class="text-xs text-gray-500 hover:text-red-500 transition">Clear</button>
+                        </div>
+                    </div>
+                </div>
+                <input type="text" name="title" id="title" required
+                       value="{{ ticket.title if ticket else '' }}"
+                       class="flex-1 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border"
+                       placeholder="What needs to be done?">
+            </div>
         </div>
 
         <!-- Description -->
@@ -90,4 +108,22 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const emojis = ['📋','📌','📝','📎','📁','📂','🗂️','📊','📈','📉','🔔','🔕','⏰','⏳','🕐','📅','📆','🗓️','✅','❌','⚠️','🚨','💡','🔑','🔒','🔓','🏠','🏢','🏥','🏦','🚗','✈️','🚀','🛒','💰','💳','💵','🎯','🎓','📚','📖','✏️','🖊️','💻','🖥️','📱','📧','💬','📞','🔧','🛠️','⚙️','🧹','🧺','🍽️','🏋️','🧘','💊','🩺','❤️','⭐','🌟','🔥','💪','👍','👎','🤝','👨‍👩‍👧‍👦','👤','🐛','🐞','🎨','🎬','🎵','🎮','🌱','🌍','♻️','🔄','📦','🏷️','🎁','🎉','🎈','🏆','🥇','💎'];
+const grid = document.getElementById('emoji-grid');
+emojis.forEach(e => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer';
+    btn.textContent = e;
+    btn.addEventListener('click', () => {
+        document.getElementById('emoji-input').value = e;
+        document.getElementById('emoji-preview').textContent = e;
+    });
+    grid.appendChild(btn);
+});
+</script>
 {% endblock %}
