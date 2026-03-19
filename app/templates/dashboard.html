@@ -3,92 +3,92 @@
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-    <p class="text-gray-500 text-sm mt-1">Your ticket overview at a glance</p>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Your ticket overview at a glance</p>
 </div>
 
 <!-- Stats Grid -->
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-    <div class="bg-white rounded-xl shadow-sm border p-4">
-        <div class="text-2xl font-bold text-gray-900">{{ stats.total }}</div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Total</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Total</div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm border p-4">
-        <div class="text-2xl font-bold text-blue-600">{{ stats.todo }}</div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">To Do</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ stats.todo }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">To Do</div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm border p-4">
-        <div class="text-2xl font-bold text-yellow-600">{{ stats.in_progress }}</div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">In Progress</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ stats.in_progress }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">In Progress</div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm border p-4">
-        <div class="text-2xl font-bold text-green-600">{{ stats.done }}</div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Done</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ stats.done }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Done</div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm border p-4">
-        <div class="text-2xl font-bold text-red-600">{{ stats.overdue }}</div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Overdue</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats.overdue }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Overdue</div>
     </div>
-    <div class="bg-white rounded-xl shadow-sm border p-4">
-        <div class="text-2xl font-bold text-orange-600">{{ stats.urgent }}</div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Urgent</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ stats.urgent }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Urgent</div>
     </div>
 </div>
 
 <!-- Quick Actions -->
 <div class="grid md:grid-cols-2 gap-6">
     <!-- Recent Tickets -->
-    <div class="bg-white rounded-xl shadow-sm border">
-        <div class="px-5 py-4 border-b flex items-center justify-between">
-            <h2 class="font-semibold text-gray-900">Recent Tickets</h2>
-            <a href="/list" class="text-brand-600 text-sm hover:underline">View all</a>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700">
+        <div class="px-5 py-4 border-b dark:border-gray-700 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 dark:text-white">Recent Tickets</h2>
+            <a href="/list" class="text-brand-600 dark:text-brand-200 text-sm hover:underline">View all</a>
         </div>
-        <div class="divide-y">
+        <div class="divide-y dark:divide-gray-700">
             {% set recent = tickets|sort(attribute='created_at', reverse=true) %}
             {% for ticket in recent[:5] %}
-            <a href="/ticket/{{ ticket.id }}/edit" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
+            <a href="/ticket/{{ ticket.id }}/edit" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 <span class="w-2 h-2 rounded-full flex-shrink-0
                     {% if ticket.priority == 'urgent' %}bg-red-500
                     {% elif ticket.priority == 'high' %}bg-orange-500
                     {% elif ticket.priority == 'medium' %}bg-yellow-500
                     {% else %}bg-gray-400{% endif %}"></span>
                 <div class="min-w-0 flex-1">
-                    <div class="text-sm font-medium text-gray-900 truncate">{{ ticket.title }}</div>
-                    <div class="text-xs text-gray-500">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ ticket.title }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
                         {{ ticket.status | replace('_', ' ') | title }}
                         {% if ticket.category %} · {{ ticket.category.name }}{% endif %}
                     </div>
                 </div>
                 {% if ticket.due_date %}
-                <span class="text-xs {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 font-semibold{% else %}text-gray-400{% endif %}">
+                <span class="text-xs {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 dark:text-red-400 font-semibold{% else %}text-gray-400{% endif %}">
                     {{ ticket.due_date.strftime('%b %d') }}
                 </span>
                 {% endif %}
             </a>
             {% else %}
             <div class="px-5 py-8 text-center text-gray-400 text-sm">
-                No tickets yet. <a href="/ticket/new" class="text-brand-600 hover:underline">Create one</a>
+                No tickets yet. <a href="/ticket/new" class="text-brand-600 dark:text-brand-200 hover:underline">Create one</a>
             </div>
             {% endfor %}
         </div>
     </div>
 
     <!-- Categories Breakdown -->
-    <div class="bg-white rounded-xl shadow-sm border">
-        <div class="px-5 py-4 border-b flex items-center justify-between">
-            <h2 class="font-semibold text-gray-900">By Category</h2>
-            <a href="/categories" class="text-brand-600 text-sm hover:underline">Manage</a>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700">
+        <div class="px-5 py-4 border-b dark:border-gray-700 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 dark:text-white">By Category</h2>
+            <a href="/categories" class="text-brand-600 dark:text-brand-200 text-sm hover:underline">Manage</a>
         </div>
-        <div class="divide-y">
+        <div class="divide-y dark:divide-gray-700">
             {% for cat in categories %}
-            <a href="/list?category={{ cat.id }}" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition">
+            <a href="/list?category={{ cat.id }}" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 <span class="w-3 h-3 rounded-full flex-shrink-0" style="background: {{ cat.color }}"></span>
-                <span class="text-sm font-medium text-gray-900 flex-1">{{ cat.name }}</span>
-                <span class="text-sm text-gray-500">{{ cat.tickets | length }}</span>
+                <span class="text-sm font-medium text-gray-900 dark:text-white flex-1">{{ cat.name }}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">{{ cat.tickets | length }}</span>
             </a>
             {% else %}
             <div class="px-5 py-8 text-center text-gray-400 text-sm">
-                No categories yet. <a href="/categories" class="text-brand-600 hover:underline">Create one</a>
+                No categories yet. <a href="/categories" class="text-brand-600 dark:text-brand-200 hover:underline">Create one</a>
             </div>
             {% endfor %}
         </div>

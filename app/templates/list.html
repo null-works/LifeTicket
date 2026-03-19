@@ -3,51 +3,51 @@
 
 {% block content %}
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">All Tickets</h1>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">All Tickets</h1>
     <a href="/ticket/new" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition text-center">+ New Ticket</a>
 </div>
 
 <!-- Filters -->
-<div class="bg-white rounded-xl shadow-sm border p-4 mb-4" x-data="{ open: false }">
-    <button @click="open = !open" class="flex items-center gap-2 text-sm font-medium text-gray-700 md:hidden">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 mb-4" x-data="{ open: false }">
+    <button @click="open = !open" class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 md:hidden">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 6a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm4 6a1 1 0 011-1h4a1 1 0 010 2h-4a1 1 0 01-1-1z"/></svg>
         Filters
     </button>
     <form method="GET" action="/list" class="md:flex md:items-center md:gap-3" :class="open ? 'mt-3 space-y-2' : 'hidden md:flex'">
-        <select name="status" class="w-full md:w-auto text-sm border-gray-300 rounded-lg px-3 py-1.5 border">
+        <select name="status" class="w-full md:w-auto text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-1.5 border">
             <option value="">All Statuses</option>
             <option value="todo" {% if request.args.get('status') == 'todo' %}selected{% endif %}>To Do</option>
             <option value="in_progress" {% if request.args.get('status') == 'in_progress' %}selected{% endif %}>In Progress</option>
             <option value="done" {% if request.args.get('status') == 'done' %}selected{% endif %}>Done</option>
         </select>
-        <select name="priority" class="w-full md:w-auto text-sm border-gray-300 rounded-lg px-3 py-1.5 border">
+        <select name="priority" class="w-full md:w-auto text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-1.5 border">
             <option value="">All Priorities</option>
             <option value="urgent" {% if request.args.get('priority') == 'urgent' %}selected{% endif %}>Urgent</option>
             <option value="high" {% if request.args.get('priority') == 'high' %}selected{% endif %}>High</option>
             <option value="medium" {% if request.args.get('priority') == 'medium' %}selected{% endif %}>Medium</option>
             <option value="low" {% if request.args.get('priority') == 'low' %}selected{% endif %}>Low</option>
         </select>
-        <select name="category" class="w-full md:w-auto text-sm border-gray-300 rounded-lg px-3 py-1.5 border">
+        <select name="category" class="w-full md:w-auto text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-1.5 border">
             <option value="">All Categories</option>
             {% for cat in categories %}
             <option value="{{ cat.id }}" {% if request.args.get('category') == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
             {% endfor %}
         </select>
-        <select name="sort" class="w-full md:w-auto text-sm border-gray-300 rounded-lg px-3 py-1.5 border">
+        <select name="sort" class="w-full md:w-auto text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-1.5 border">
             <option value="created_at" {% if request.args.get('sort', 'created_at') == 'created_at' %}selected{% endif %}>Newest</option>
             <option value="due_date" {% if request.args.get('sort') == 'due_date' %}selected{% endif %}>Due Date</option>
             <option value="priority" {% if request.args.get('sort') == 'priority' %}selected{% endif %}>Priority</option>
             <option value="title" {% if request.args.get('sort') == 'title' %}selected{% endif %}>Title</option>
         </select>
         <button type="submit" class="w-full md:w-auto bg-brand-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-brand-700 transition">Filter</button>
-        <a href="/list" class="block text-center md:inline text-sm text-gray-500 hover:text-gray-700">Clear</a>
+        <a href="/list" class="block text-center md:inline text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Clear</a>
     </form>
 </div>
 
 <!-- Tickets Table / Cards -->
 <div class="space-y-2">
     {% for ticket in tickets %}
-    <div class="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 hover:shadow-md transition">
         <div class="flex items-start gap-3">
             <span class="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0
                 {% if ticket.priority == 'urgent' %}bg-red-500
@@ -56,29 +56,29 @@
                 {% else %}bg-gray-400{% endif %}"></span>
             <div class="min-w-0 flex-1">
                 <div class="flex items-start justify-between gap-2">
-                    <a href="/ticket/{{ ticket.id }}/edit" class="font-medium text-gray-900 hover:text-brand-600">
+                    <a href="/ticket/{{ ticket.id }}/edit" class="font-medium text-gray-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-200">
                         {{ ticket.title }}
                     </a>
                     <span class="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium
-                        {% if ticket.status == 'todo' %}bg-blue-100 text-blue-700
-                        {% elif ticket.status == 'in_progress' %}bg-yellow-100 text-yellow-700
-                        {% else %}bg-green-100 text-green-700{% endif %}">
+                        {% if ticket.status == 'todo' %}bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300
+                        {% elif ticket.status == 'in_progress' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300
+                        {% else %}bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300{% endif %}">
                         {{ ticket.status | replace('_', ' ') | title }}
                     </span>
                 </div>
                 {% if ticket.description %}
-                <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ ticket.description }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ ticket.description }}</p>
                 {% endif %}
                 <div class="flex flex-wrap items-center gap-2 mt-2">
                     {% if ticket.category %}
                     <span class="text-xs px-2 py-0.5 rounded-full text-white" style="background: {{ ticket.category.color }}">{{ ticket.category.name }}</span>
                     {% endif %}
                     {% for tag in ticket.tags %}
-                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{{ tag.name }}</span>
+                    <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">{{ tag.name }}</span>
                     {% endfor %}
                     {% if ticket.due_date %}
                     <span class="text-xs
-                        {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 font-semibold
+                        {% if ticket.due_date < today and ticket.status != 'done' %}text-red-600 dark:text-red-400 font-semibold
                         {% else %}text-gray-400{% endif %}">
                         Due {{ ticket.due_date.strftime('%b %d, %Y') }}
                     </span>
@@ -88,8 +88,8 @@
         </div>
     </div>
     {% else %}
-    <div class="bg-white rounded-xl shadow-sm border p-8 text-center text-gray-400">
-        No tickets found. <a href="/ticket/new" class="text-brand-600 hover:underline">Create one</a>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-8 text-center text-gray-400">
+        No tickets found. <a href="/ticket/new" class="text-brand-600 dark:text-brand-200 hover:underline">Create one</a>
     </div>
     {% endfor %}
 </div>
