@@ -1,3 +1,0 @@
-calendar.kylem.cc {
-	reverse_proxy lifeticket:5000
-}
