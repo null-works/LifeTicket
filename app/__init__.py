@@ -42,10 +42,22 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _add_missing_columns()
         _migrate_statuses()
         _ensure_admin(app)
 
     return app
+
+
+def _add_missing_columns():
+    """Add new columns that db.create_all() won't add to existing tables."""
+    from sqlalchemy import inspect, text
+    inspector = inspect(db.engine)
+    columns = [c["name"] for c in inspector.get_columns("ticket")]
+    if "emoji" not in columns:
+        db.session.execute(text("ALTER TABLE ticket ADD COLUMN emoji VARCHAR(10) DEFAULT ''"))
+        db.session.commit()
+        print("[LifeTicket] Added 'emoji' column to ticket table")
 
 
 def _migrate_statuses():
