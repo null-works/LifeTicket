@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required
 from app import db
-from app.models import Ticket, Category, Tag, GroceryItem
-from datetime import date, datetime
+from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent
+from datetime import date, datetime, time
+import calendar as cal_mod
 
 main = Blueprint("main", __name__)
 api = Blueprint("api", __name__)
@@ -186,6 +187,83 @@ def grocery_clear_checked():
     return redirect(url_for("main.grocery"))
 
 
+@main.route("/calendar")
+@login_required
+def calendar_view():
+    today = date.today()
+    year = request.args.get("year", today.year, type=int)
+    month = request.args.get("month", today.month, type=int)
+
+    # Build calendar grid
+    first_weekday, num_days = cal_mod.monthrange(year, month)
+    # Monday=0, we want Sunday=0 start
+    first_weekday = (first_weekday + 1) % 7
+
+    # Dates for the visible grid
+    from datetime import timedelta
+    start_date = date(year, month, 1) - timedelta(days=first_weekday)
+    # 6 rows * 7 days
+    grid_dates = [start_date + timedelta(days=i) for i in range(42)]
+
+    # Fetch events for the visible range
+    events = CalendarEvent.query.filter(
+        CalendarEvent.date >= grid_dates[0],
+        CalendarEvent.date <= grid_dates[-1],
+    ).order_by(CalendarEvent.start_time, CalendarEvent.created_at).all()
+
+    # Fetch tickets with due dates in range
+    tickets = Ticket.query.filter(
+        Ticket.due_date >= grid_dates[0],
+        Ticket.due_date <= grid_dates[-1],
+        Ticket.status.notin_(["done", "cancelled"]),
+    ).order_by(Ticket.due_date).all()
+
+    # Build lookup: date -> list of items
+    date_items = {}
+    for ev in events:
+        date_items.setdefault(ev.date, []).append({
+            "id": ev.id,
+            "title": ev.title,
+            "color": ev.color,
+            "start_time": ev.start_time.strftime("%H:%M") if ev.start_time else None,
+            "type": "event",
+        })
+    for t in tickets:
+        date_items.setdefault(t.due_date, []).append({
+            "id": t.id,
+            "title": (t.emoji + " " if t.emoji else "") + t.title,
+            "color": t.category.color if t.category else "#f59e0b",
+            "start_time": None,
+            "type": "ticket",
+        })
+
+    # Prev/next month
+    if month == 1:
+        prev_year, prev_month = year - 1, 12
+    else:
+        prev_year, prev_month = year, month - 1
+    if month == 12:
+        next_year, next_month = year + 1, 1
+    else:
+        next_year, next_month = year, month + 1
+
+    month_name = cal_mod.month_name[month]
+
+    return render_template(
+        "calendar.html",
+        grid_dates=grid_dates,
+        date_items=date_items,
+        year=year,
+        month=month,
+        month_name=month_name,
+        today=today,
+        prev_year=prev_year,
+        prev_month=prev_month,
+        next_year=next_year,
+        next_month=next_month,
+    )
+
+
 # --- API Routes (for AJAX / board drag-drop) ---
 
 
@@ -210,6 +288,41 @@ def grocery_toggle(item_id):
     item.checked = not item.checked
     db.session.commit()
     return jsonify(item.to_dict())
+
+
+@api.route("/calendar/events", methods=["POST"])
+@login_required
+def create_event():
+    data = request.get_json()
+    title = (data.get("title") or "").strip()
+    if not title:
+        return jsonify({"error": "Title required"}), 400
+    ev = CalendarEvent(
+        title=title,
+        description=(data.get("description") or "").strip(),
+        color=data.get("color", "#6366f1"),
+        date=date.fromisoformat(data["date"]),
+        all_day=data.get("all_day", True),
+    )
+    if not ev.all_day:
+        st = data.get("start_time")
+        et = data.get("end_time")
+        if st:
+            ev.start_time = time.fromisoformat(st)
+        if et:
+            ev.end_time = time.fromisoformat(et)
+    db.session.add(ev)
+    db.session.commit()
+    return jsonify(ev.to_dict()), 201
+
+
+@api.route("/calendar/events/<int:event_id>", methods=["DELETE"])
+@login_required
+def delete_event(event_id):
+    ev = CalendarEvent.query.get_or_404(event_id)
+    db.session.delete(ev)
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @api.route("/tickets", methods=["GET"])
