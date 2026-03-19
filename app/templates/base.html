@@ -102,12 +102,12 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
+    <main class="{% block main_class %}max-w-7xl mx-auto px-4 py-6{% endblock %}">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="max-w-7xl mx-auto px-4 py-4 text-center">
+    <footer class="{% block footer_class %}max-w-7xl mx-auto px-4 py-4{% endblock %} text-center">
         <span class="text-xs text-gray-400 dark:text-gray-600">LifeTicket v{{ version }}</span>
     </footer>
 
