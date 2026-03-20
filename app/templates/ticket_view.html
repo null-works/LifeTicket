@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}{{ ticket.emoji }} {{ ticket.title }} — LifeTicket{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto" x-data="{ tab: 'comments' }">
+
+    <!-- Header -->
+    <div class="flex items-start gap-3 mb-6">
+        <a href="javascript:history.back()" class="mt-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div class="flex-1 min-w-0">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                {% if ticket.emoji %}<span class="mr-1">{{ ticket.emoji }}</span>{% endif %}{{ ticket.title }}
+            </h1>
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium text-white"
+                      style="background: {{ ticket.status_obj.color if ticket.status_obj else '#6b7280' }}">
+                    {{ ticket.status_obj.label if ticket.status_obj else ticket.status | replace('_', ' ') | title }}
+                </span>
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                    {% if ticket.priority == 'urgent' %}bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400
+                    {% elif ticket.priority == 'high' %}bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400
+                    {% elif ticket.priority == 'medium' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400
+                    {% else %}bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400{% endif %}">
+                    {{ ticket.priority | title }}
+                </span>
+                {% if ticket.category %}
+                <span class="text-xs px-2 py-0.5 rounded-full text-white" style="background: {{ ticket.category.color }}">{{ ticket.category.name }}</span>
+                {% endif %}
+                {% for tag in ticket.tags %}
+                <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded">#{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        <a href="/ticket/{{ ticket.id }}/edit" class="flex-shrink-0 bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">Edit</a>
+    </div>
+
+    <!-- Meta row -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 mb-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div>
+                <div class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">Created</div>
+                <div class="text-gray-900 dark:text-white">{{ ticket.created_at.strftime('%b %d, %Y') }}</div>
+            </div>
+            <div>
+                <div class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">Updated</div>
+                <div class="text-gray-900 dark:text-white">{{ ticket.updated_at.strftime('%b %d, %Y') }}</div>
+            </div>
+            {% if ticket.due_date %}
+            <div>
+                <div class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">Due Date</div>
+                <div class="{% if ticket.due_date < today and ticket.status_obj and not ticket.status_obj.is_closed %}text-red-600 dark:text-red-400 font-semibold{% else %}text-gray-900 dark:text-white{% endif %}">
+                    {{ ticket.due_date.strftime('%b %d, %Y') }}
+                </div>
+            </div>
+            {% endif %}
+            <div>
+                <div class="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">ID</div>
+                <div class="text-gray-900 dark:text-white">#{{ ticket.id }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if ticket.description %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-5 mb-4">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Description</h2>
+        <div class="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">{{ ticket.description }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Tabs -->
+    <div class="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mb-4">
+        <button @click="tab = 'comments'"
+                :class="tab === 'comments' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                class="flex-1 text-sm font-medium px-3 py-2 rounded-md transition">
+            Comments <span class="text-xs opacity-60">({{ ticket.comments | length }})</span>
+        </button>
+        <button @click="tab = 'files'"
+                :class="tab === 'files' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                class="flex-1 text-sm font-medium px-3 py-2 rounded-md transition">
+            Files <span class="text-xs opacity-60">({{ ticket.attachments | length }})</span>
+        </button>
+        <button @click="tab = 'history'"
+                :class="tab === 'history' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                class="flex-1 text-sm font-medium px-3 py-2 rounded-md transition">
+            History <span class="text-xs opacity-60">({{ ticket.history | length }})</span>
+        </button>
+    </div>
+
+    <!-- Comments Tab -->
+    <div x-show="tab === 'comments'" x-cloak>
+        <!-- Add Comment -->
+        <form method="POST" action="/ticket/{{ ticket.id }}/comment" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 mb-4">
+            <textarea name="body" required rows="3" placeholder="Add a comment..."
+                      class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg shadow-sm focus:ring-brand-500 focus:border-brand-500 text-sm px-3 py-2 border resize-none"></textarea>
+            <div class="flex justify-end mt-2">
+                <button type="submit" class="bg-brand-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">Post Comment</button>
+            </div>
+        </form>
+
+        <!-- Comment List -->
+        <div class="space-y-3">
+            {% for comment in ticket.comments %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap flex-1">{{ comment.body }}</div>
+                    <form method="POST" action="/ticket/{{ ticket.id }}/comment/{{ comment.id }}/delete"
+                          onsubmit="return confirm('Delete this comment?')" class="flex-shrink-0">
+                        <button type="submit" class="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </form>
+                </div>
+                <div class="text-xs text-gray-400 dark:text-gray-500 mt-2">{{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
+            </div>
+            {% else %}
+            <div class="text-center text-gray-400 dark:text-gray-500 text-sm py-8">No comments yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Files Tab -->
+    <div x-show="tab === 'files'" x-cloak>
+        <!-- Upload -->
+        <form method="POST" action="/ticket/{{ ticket.id }}/upload" enctype="multipart/form-data"
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 mb-4">
+            <div class="flex items-center gap-3">
+                <input type="file" name="file" required
+                       class="flex-1 text-sm text-gray-600 dark:text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-600 dark:file:bg-brand-900/30 dark:file:text-brand-300 hover:file:bg-brand-100 dark:hover:file:bg-brand-900/50 file:cursor-pointer">
+                <button type="submit" class="bg-brand-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">Upload</button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Max 10 MB. Allowed: images, PDF, text, zip, office docs.</p>
+        </form>
+
+        <!-- File List -->
+        <div class="space-y-2">
+            {% for att in ticket.attachments %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+                <div class="flex items-center gap-3">
+                    {% if att.is_image %}
+                    <img src="/static/uploads/{{ att.filename }}" alt="{{ att.original_name }}" class="w-12 h-12 rounded object-cover flex-shrink-0 border dark:border-gray-600">
+                    {% else %}
+                    <div class="w-12 h-12 rounded bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <a href="/static/uploads/{{ att.filename }}" target="_blank"
+                           class="text-sm font-medium text-brand-600 dark:text-brand-300 hover:underline truncate block">{{ att.original_name }}</a>
+                        <div class="text-xs text-gray-400 dark:text-gray-500">{{ att.size_display }} · {{ att.created_at.strftime('%b %d, %Y') }}</div>
+                    </div>
+                    <form method="POST" action="/ticket/{{ ticket.id }}/attachment/{{ att.id }}/delete"
+                          onsubmit="return confirm('Delete this file?')">
+                        <button type="submit" class="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center text-gray-400 dark:text-gray-500 text-sm py-8">No files uploaded yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- History Tab -->
+    <div x-show="tab === 'history'" x-cloak>
+        <div class="space-y-2">
+            {% for h in ticket.history %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 px-4 py-3">
+                <div class="flex items-start gap-2 text-sm">
+                    <svg class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="flex-1">
+                        <span class="text-gray-700 dark:text-gray-300">
+                            <span class="font-medium capitalize">{{ h.field }}</span> changed
+                            {% if h.old_value %}from <span class="line-through text-gray-400 dark:text-gray-500">{{ h.old_value }}</span>{% endif %}
+                            to <span class="font-medium text-gray-900 dark:text-white">{{ h.new_value }}</span>
+                        </span>
+                        <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ h.created_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center text-gray-400 dark:text-gray-500 text-sm py-8">No edit history yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

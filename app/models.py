@@ -1,3 +1,4 @@
+import os
 from app import db
 from datetime import datetime, timezone
 from flask_login import UserMixin
@@ -122,6 +123,9 @@ class Ticket(db.Model):
         onupdate=lambda: datetime.now(timezone.utc),
     )
     tags = db.relationship("Tag", secondary=ticket_tags, backref="tickets", lazy=True)
+    comments = db.relationship("TicketComment", backref="ticket", lazy=True, order_by="TicketComment.created_at.desc()", cascade="all, delete-orphan")
+    attachments = db.relationship("TicketAttachment", backref="ticket", lazy=True, order_by="TicketAttachment.created_at.desc()", cascade="all, delete-orphan")
+    history = db.relationship("TicketHistory", backref="ticket", lazy=True, order_by="TicketHistory.created_at.desc()", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -138,3 +142,41 @@ class Ticket(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
+
+
+class TicketComment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey("ticket.id"), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class TicketAttachment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey("ticket.id"), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_name = db.Column(db.String(255), nullable=False)
+    size = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    @property
+    def size_display(self):
+        if self.size < 1024:
+            return f"{self.size} B"
+        elif self.size < 1024 * 1024:
+            return f"{self.size / 1024:.1f} KB"
+        return f"{self.size / (1024 * 1024):.1f} MB"
+
+    @property
+    def is_image(self):
+        ext = os.path.splitext(self.original_name)[1].lower()
+        return ext in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')
+
+
+class TicketHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey("ticket.id"), nullable=False)
+    field = db.Column(db.String(50), nullable=False)
+    old_value = db.Column(db.Text, default="")
+    new_value = db.Column(db.Text, default="")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

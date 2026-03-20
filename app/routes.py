@@ -1,9 +1,15 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+import os
+import uuid
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, current_app, send_from_directory
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 from app import db
-from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status
+from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory
 from datetime import date, datetime, time
 import calendar as cal_mod
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'pdf', 'txt', 'md', 'zip', 'csv', 'doc', 'docx', 'xls', 'xlsx'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 main = Blueprint("main", __name__)
 api = Blueprint("api", __name__)
@@ -110,7 +116,7 @@ def ticket_edit(ticket_id):
     if request.method == "POST":
         _save_ticket(ticket, request.form)
         db.session.commit()
-        return redirect(url_for("main.board"))
+        return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
 
     categories = Category.query.order_by(Category.name).all()
     tags = Tag.query.order_by(Tag.name).all()
@@ -125,6 +131,83 @@ def ticket_delete(ticket_id):
     db.session.delete(ticket)
     db.session.commit()
     return redirect(url_for("main.board"))
+
+
+@main.route("/ticket/<int:ticket_id>")
+@login_required
+def ticket_view(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    statuses = Status.query.order_by(Status.position).all()
+    return render_template("ticket_view.html", ticket=ticket, statuses=statuses)
+
+
+@main.route("/ticket/<int:ticket_id>/comment", methods=["POST"])
+@login_required
+def ticket_add_comment(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    body = request.form.get("body", "").strip()
+    if body:
+        comment = TicketComment(ticket_id=ticket.id, body=body)
+        db.session.add(comment)
+        db.session.commit()
+    return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
+
+
+@main.route("/ticket/<int:ticket_id>/comment/<int:comment_id>/delete", methods=["POST"])
+@login_required
+def ticket_delete_comment(ticket_id, comment_id):
+    comment = TicketComment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    return redirect(url_for("main.ticket_view", ticket_id=ticket_id))
+
+
+@main.route("/ticket/<int:ticket_id>/upload", methods=["POST"])
+@login_required
+def ticket_upload(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
+
+    original = secure_filename(file.filename)
+    ext = os.path.splitext(original)[1].lower().lstrip(".")
+    if ext not in ALLOWED_EXTENSIONS:
+        return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
+
+    upload_dir = os.path.join(current_app.root_path, "static", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    unique_name = f"{uuid.uuid4().hex}_{original}"
+    path = os.path.join(upload_dir, unique_name)
+    file.save(path)
+    size = os.path.getsize(path)
+
+    if size > MAX_FILE_SIZE:
+        os.remove(path)
+        return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
+
+    attachment = TicketAttachment(
+        ticket_id=ticket.id,
+        filename=unique_name,
+        original_name=original,
+        size=size,
+    )
+    db.session.add(attachment)
+    db.session.commit()
+    return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
+
+
+@main.route("/ticket/<int:ticket_id>/attachment/<int:att_id>/delete", methods=["POST"])
+@login_required
+def ticket_delete_attachment(ticket_id, att_id):
+    att = TicketAttachment.query.get_or_404(att_id)
+    filepath = os.path.join(current_app.root_path, "static", "uploads", att.filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+    db.session.delete(att)
+    db.session.commit()
+    return redirect(url_for("main.ticket_view", ticket_id=ticket_id))
 
 
 @main.route("/categories", methods=["GET", "POST"])
@@ -335,6 +418,14 @@ def update_status(ticket_id):
     new_status = data.get("status")
     valid = Status.query.filter_by(name=new_status).first()
     if valid:
+        old_status = ticket.status
+        if old_status != new_status:
+            db.session.add(TicketHistory(
+                ticket_id=ticket.id,
+                field="status",
+                old_value=old_status,
+                new_value=new_status,
+            ))
         ticket.status = new_status
         ticket.updated_at = datetime.now()
         db.session.commit()
@@ -397,6 +488,21 @@ def list_tickets():
 
 
 def _save_ticket(ticket, form):
+    is_new = ticket.id is None
+
+    # Capture old values for history tracking (only for existing tickets)
+    if not is_new:
+        old = {
+            "title": ticket.title or "",
+            "description": ticket.description or "",
+            "status": ticket.status or "",
+            "priority": ticket.priority or "",
+            "due_date": ticket.due_date.isoformat() if ticket.due_date else "",
+            "category": ticket.category.name if ticket.category else "",
+            "emoji": ticket.emoji or "",
+            "tags": ", ".join(sorted(t.name for t in ticket.tags)),
+        }
+
     ticket.emoji = form.get("emoji", "").strip()
     ticket.title = form.get("title", "").strip()
     ticket.description = form.get("description", "").strip()
@@ -419,5 +525,26 @@ def _save_ticket(ticket, form):
             db.session.flush()
         tags.append(tag)
     ticket.tags = tags
+
+    # Record history for changed fields
+    if not is_new:
+        new = {
+            "title": ticket.title or "",
+            "description": ticket.description or "",
+            "status": ticket.status or "",
+            "priority": ticket.priority or "",
+            "due_date": ticket.due_date.isoformat() if ticket.due_date else "",
+            "category": Category.query.get(ticket.category_id).name if ticket.category_id else "",
+            "emoji": ticket.emoji or "",
+            "tags": ", ".join(sorted(t.name for t in ticket.tags)),
+        }
+        for field in old:
+            if old[field] != new[field]:
+                db.session.add(TicketHistory(
+                    ticket_id=ticket.id,
+                    field=field,
+                    old_value=old[field],
+                    new_value=new[field],
+                ))
 
     return ticket

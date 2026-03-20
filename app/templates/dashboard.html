@@ -42,7 +42,7 @@
         <div class="divide-y dark:divide-gray-700">
             {% set recent = tickets|sort(attribute='created_at', reverse=true) %}
             {% for ticket in recent[:5] %}
-            <a href="/ticket/{{ ticket.id }}/edit" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            <a href="/ticket/{{ ticket.id }}" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 <span class="w-2 h-2 rounded-full flex-shrink-0
                     {% if ticket.priority == 'urgent' %}bg-red-500
                     {% elif ticket.priority == 'high' %}bg-orange-500

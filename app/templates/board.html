@@ -70,7 +70,7 @@
                                     {% elif ticket.priority == 'medium' %}bg-yellow-400 ring-yellow-200 dark:ring-yellow-900
                                     {% else %}bg-gray-300 ring-gray-100 dark:ring-gray-700{% endif %}"></span>
                                 <div class="min-w-0 flex-1">
-                                    <a href="/ticket/{{ ticket.id }}/edit" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 dark:hover:text-brand-300 block leading-snug">
+                                    <a href="/ticket/{{ ticket.id }}" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 dark:hover:text-brand-300 block leading-snug">
                                         {% if ticket.emoji %}<span class="mr-0.5">{{ ticket.emoji }}</span>{% endif %}{{ ticket.title }}
                                     </a>
                                 </div>
@@ -112,7 +112,7 @@
                             {% elif ticket.priority == 'medium' %}bg-yellow-400 ring-yellow-200 dark:ring-yellow-900
                             {% else %}bg-gray-300 ring-gray-100 dark:ring-gray-700{% endif %}"></span>
                         <div class="min-w-0 flex-1">
-                            <a href="/ticket/{{ ticket.id }}/edit" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 dark:hover:text-brand-300 block leading-snug">
+                            <a href="/ticket/{{ ticket.id }}" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-brand-600 dark:hover:text-brand-300 block leading-snug">
                                 {% if ticket.emoji %}<span class="mr-0.5">{{ ticket.emoji }}</span>{% endif %}{{ ticket.title }}
                             </a>
                             {% if ticket.category or ticket.tags %}
