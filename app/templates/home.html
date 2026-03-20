@@ -130,12 +130,12 @@
         </div>
         <div class="grid grid-cols-2 gap-2">
             <div>
-                <div class="text-xl font-bold {% if bill_stats.unpaid > 0 %}text-red-600 dark:text-red-400{% else %}text-gray-900 dark:text-white{% endif %}">{{ bill_stats.unpaid }}</div>
-                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Unpaid</div>
+                <div class="text-xl font-bold {% if bill_stats.this_month > 0 %}text-red-600 dark:text-red-400{% else %}text-green-600 dark:text-green-400{% endif %}">${{ "%.0f" | format(bill_stats.this_month) }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">{{ bill_stats.current_month_label }}</div>
             </div>
             <div>
-                <div class="text-xl font-bold text-gray-900 dark:text-white">${{ "%.0f" | format(bill_stats.unpaid_amount) }}</div>
-                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Due</div>
+                <div class="text-xl font-bold {% if bill_stats.next_month > 0 %}text-yellow-600 dark:text-yellow-400{% else %}text-gray-900 dark:text-white{% endif %}">${{ "%.0f" | format(bill_stats.next_month) }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">{{ bill_stats.next_month_label }}</div>
             </div>
             {% if bill_stats.overdue > 0 %}
             <div>

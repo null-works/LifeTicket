@@ -51,10 +51,24 @@ def home():
 
     all_bills = Bill.query.all()
     unpaid_bills = [b for b in all_bills if not b.paid]
+    today = date.today()
+    current_month_start = today.replace(day=1)
+    if today.month == 12:
+        next_month_start = today.replace(year=today.year + 1, month=1, day=1)
+        month_after_next = today.replace(year=today.year + 1, month=2, day=1)
+    elif today.month == 11:
+        next_month_start = today.replace(month=12, day=1)
+        month_after_next = today.replace(year=today.year + 1, month=1, day=1)
+    else:
+        next_month_start = today.replace(month=today.month + 1, day=1)
+        month_after_next = today.replace(month=today.month + 2, day=1)
     bill_stats = {
         "total": len(all_bills),
         "unpaid": len(unpaid_bills),
-        "unpaid_amount": sum(b.amount for b in unpaid_bills),
+        "this_month": sum(b.amount for b in unpaid_bills if b.due_date and current_month_start <= b.due_date < next_month_start),
+        "next_month": sum(b.amount for b in unpaid_bills if b.due_date and next_month_start <= b.due_date < month_after_next),
+        "current_month_label": current_month_start.strftime("%B"),
+        "next_month_label": next_month_start.strftime("%B"),
         "overdue": sum(1 for b in unpaid_bills if b.is_overdue),
     }
 
