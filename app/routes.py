@@ -499,8 +499,9 @@ def bills():
     bills_list = query.order_by(Bill.due_date.asc().nullslast(), Bill.name).all()
 
     all_bills = Bill.query.all()
-    total_unpaid = sum(b.amount for b in all_bills if not b.paid)
-    total_paid_amount = sum(b.amount for b in all_bills if b.paid)
+    today = date.today()
+    total_due_now = sum(b.amount for b in all_bills if not b.paid and b.due_date and b.due_date <= today)
+    total_upcoming = sum(b.amount for b in all_bills if not b.paid and (not b.due_date or b.due_date > today))
 
     # Monthly cost estimate based on frequency
     freq_multiplier = {"weekly": 4.33, "biweekly": 2.17, "monthly": 1, "quarterly": 1/3, "yearly": 1/12, "once": 0}
@@ -511,8 +512,8 @@ def bills():
         bills=bills_list,
         bill_frequencies=BILL_FREQUENCIES,
         show=show,
-        total_unpaid=total_unpaid,
-        total_paid=total_paid_amount,
+        total_due_now=total_due_now,
+        total_upcoming=total_upcoming,
         monthly_estimate=monthly_estimate,
         editing=None,
     )
@@ -544,8 +545,9 @@ def bill_edit(bill_id):
     bills_list = query.order_by(Bill.due_date.asc().nullslast(), Bill.name).all()
 
     all_bills = Bill.query.all()
-    total_unpaid = sum(b.amount for b in all_bills if not b.paid)
-    total_paid_amount = sum(b.amount for b in all_bills if b.paid)
+    today = date.today()
+    total_due_now = sum(b.amount for b in all_bills if not b.paid and b.due_date and b.due_date <= today)
+    total_upcoming = sum(b.amount for b in all_bills if not b.paid and (not b.due_date or b.due_date > today))
 
     freq_multiplier = {"weekly": 4.33, "biweekly": 2.17, "monthly": 1, "quarterly": 1/3, "yearly": 1/12, "once": 0}
     monthly_estimate = sum(b.amount * freq_multiplier.get(b.frequency, 0) for b in all_bills if not b.paid or b.is_recurring)
@@ -555,8 +557,8 @@ def bill_edit(bill_id):
         bills=bills_list,
         bill_frequencies=BILL_FREQUENCIES,
         show=show,
-        total_unpaid=total_unpaid,
-        total_paid=total_paid_amount,
+        total_due_now=total_due_now,
+        total_upcoming=total_upcoming,
         monthly_estimate=monthly_estimate,
         editing=bill,
     )
