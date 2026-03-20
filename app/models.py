@@ -255,6 +255,22 @@ BILL_FREQUENCIES = [
 BILL_FREQUENCY_MAP = {key: label for key, label in BILL_FREQUENCIES}
 
 
+def _advance_date(d, frequency):
+    """Compute the next due date from date d based on frequency."""
+    from dateutil.relativedelta import relativedelta
+    if frequency == "weekly":
+        return d + relativedelta(weeks=1)
+    elif frequency == "biweekly":
+        return d + relativedelta(weeks=2)
+    elif frequency == "monthly":
+        return d + relativedelta(months=1)
+    elif frequency == "quarterly":
+        return d + relativedelta(months=3)
+    elif frequency == "yearly":
+        return d + relativedelta(years=1)
+    return None  # one-time bills don't advance
+
+
 class Bill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -271,15 +287,65 @@ class Bill(db.Model):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    payments = db.relationship(
+        "BillPayment", backref="bill", lazy=True,
+        order_by="BillPayment.paid_date.desc()", cascade="all, delete-orphan",
+    )
 
     @property
     def frequency_label(self):
         return BILL_FREQUENCY_MAP.get(self.frequency, self.frequency)
 
     @property
+    def is_recurring(self):
+        return self.frequency != "once"
+
+    @property
     def is_overdue(self):
         from datetime import date as d
         return self.due_date and self.due_date < d.today() and not self.paid
+
+    @property
+    def next_due_date(self):
+        """What the due date will be after paying the current cycle."""
+        if not self.due_date or not self.is_recurring:
+            return None
+        return _advance_date(self.due_date, self.frequency)
+
+    @property
+    def days_until_due(self):
+        from datetime import date as d
+        if not self.due_date:
+            return None
+        return (self.due_date - d.today()).days
+
+    @property
+    def total_paid(self):
+        return sum(p.amount for p in self.payments)
+
+    @property
+    def payment_count(self):
+        return len(self.payments)
+
+    def record_payment(self, amount=None, note=""):
+        """Record a payment and advance the due date for recurring bills."""
+        from datetime import date as d
+        payment = BillPayment(
+            bill_id=self.id,
+            amount=amount if amount is not None else self.amount,
+            paid_date=d.today(),
+            due_date_snapshot=self.due_date,
+            note=note,
+        )
+        db.session.add(payment)
+
+        if self.is_recurring and self.due_date:
+            self.due_date = _advance_date(self.due_date, self.frequency)
+            self.paid = False  # reset for next cycle
+        else:
+            self.paid = True
+
+        return payment
 
     def to_dict(self):
         return {
@@ -292,4 +358,18 @@ class Bill(db.Model):
             "paid": self.paid,
             "auto_pay": self.auto_pay,
             "notes": self.notes,
+            "is_recurring": self.is_recurring,
+            "next_due_date": self.next_due_date.isoformat() if self.next_due_date else None,
+            "payment_count": self.payment_count,
+            "total_paid": self.total_paid,
         }
+
+
+class BillPayment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bill_id = db.Column(db.Integer, db.ForeignKey("bill.id"), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    paid_date = db.Column(db.Date, nullable=False)
+    due_date_snapshot = db.Column(db.Date, nullable=True)  # what the due date was when paid
+    note = db.Column(db.String(500), default="")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory, JobApplication, JOB_STATUSES, Bill, BILL_FREQUENCIES
+from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory, JobApplication, JOB_STATUSES, Bill, BillPayment, BILL_FREQUENCIES
 from datetime import date, datetime, time
 import calendar as cal_mod
 
@@ -498,8 +498,13 @@ def bills():
         query = query.filter_by(paid=True)
     bills_list = query.order_by(Bill.due_date.asc().nullslast(), Bill.name).all()
 
-    total_unpaid = sum(b.amount for b in Bill.query.filter_by(paid=False).all())
-    total_paid = sum(b.amount for b in Bill.query.filter_by(paid=True).all())
+    all_bills = Bill.query.all()
+    total_unpaid = sum(b.amount for b in all_bills if not b.paid)
+    total_paid_amount = sum(b.amount for b in all_bills if b.paid)
+
+    # Monthly cost estimate based on frequency
+    freq_multiplier = {"weekly": 4.33, "biweekly": 2.17, "monthly": 1, "quarterly": 1/3, "yearly": 1/12, "once": 0}
+    monthly_estimate = sum(b.amount * freq_multiplier.get(b.frequency, 0) for b in all_bills if not b.paid or b.is_recurring)
 
     return render_template(
         "bills.html",
@@ -507,7 +512,8 @@ def bills():
         bill_frequencies=BILL_FREQUENCIES,
         show=show,
         total_unpaid=total_unpaid,
-        total_paid=total_paid,
+        total_paid=total_paid_amount,
+        monthly_estimate=monthly_estimate,
         editing=None,
     )
 
@@ -537,8 +543,12 @@ def bill_edit(bill_id):
         query = query.filter_by(paid=True)
     bills_list = query.order_by(Bill.due_date.asc().nullslast(), Bill.name).all()
 
-    total_unpaid = sum(b.amount for b in Bill.query.filter_by(paid=False).all())
-    total_paid = sum(b.amount for b in Bill.query.filter_by(paid=True).all())
+    all_bills = Bill.query.all()
+    total_unpaid = sum(b.amount for b in all_bills if not b.paid)
+    total_paid_amount = sum(b.amount for b in all_bills if b.paid)
+
+    freq_multiplier = {"weekly": 4.33, "biweekly": 2.17, "monthly": 1, "quarterly": 1/3, "yearly": 1/12, "once": 0}
+    monthly_estimate = sum(b.amount * freq_multiplier.get(b.frequency, 0) for b in all_bills if not b.paid or b.is_recurring)
 
     return render_template(
         "bills.html",
@@ -546,9 +556,17 @@ def bill_edit(bill_id):
         bill_frequencies=BILL_FREQUENCIES,
         show=show,
         total_unpaid=total_unpaid,
-        total_paid=total_paid,
+        total_paid=total_paid_amount,
+        monthly_estimate=monthly_estimate,
         editing=bill,
     )
+
+
+@main.route("/bills/<int:bill_id>")
+@login_required
+def bill_view(bill_id):
+    bill = Bill.query.get_or_404(bill_id)
+    return render_template("bill_view.html", bill=bill, bill_frequencies=BILL_FREQUENCIES)
 
 
 @main.route("/bills/<int:bill_id>/delete", methods=["POST"])
@@ -558,6 +576,15 @@ def bill_delete(bill_id):
     db.session.delete(bill)
     db.session.commit()
     return redirect(url_for("main.bills"))
+
+
+@main.route("/bills/<int:bill_id>/payment/<int:payment_id>/delete", methods=["POST"])
+@login_required
+def bill_delete_payment(bill_id, payment_id):
+    payment = BillPayment.query.get_or_404(payment_id)
+    db.session.delete(payment)
+    db.session.commit()
+    return redirect(url_for("main.bill_view", bill_id=bill_id))
 
 
 @main.route("/calendar")
@@ -703,7 +730,18 @@ def grocery_toggle(item_id):
 @login_required
 def bill_toggle(bill_id):
     bill = Bill.query.get_or_404(bill_id)
-    bill.paid = not bill.paid
+    if not bill.paid:
+        data = request.get_json(silent=True) or {}
+        amount = data.get("amount")
+        note = data.get("note", "")
+        bill.record_payment(
+            amount=float(amount) if amount else None,
+            note=note,
+        )
+    else:
+        # Un-marking paid for one-time bills only
+        if not bill.is_recurring:
+            bill.paid = False
     db.session.commit()
     return jsonify(bill.to_dict())
 
