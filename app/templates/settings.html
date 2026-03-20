@@ -18,6 +18,34 @@
     {% endif %}
     {% endwith %}
 
+    <!-- ID Prefixes -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">ID Prefixes</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Customize how ticket and calendar event IDs are displayed.</p>
+        <form method="POST" action="/settings/prefixes" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="ticket_prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ticket Prefix</label>
+                    <input type="text" id="ticket_prefix" name="ticket_prefix" value="{{ app_settings.ticket_prefix }}" maxlength="20"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition"
+                           placeholder="#">
+                    <p class="text-xs text-gray-400 mt-1">Preview: <span class="font-medium text-gray-600 dark:text-gray-300" id="ticket-preview">{{ app_settings.ticket_prefix }}42</span></p>
+                </div>
+                <div>
+                    <label for="event_prefix" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Calendar Event Prefix</label>
+                    <input type="text" id="event_prefix" name="event_prefix" value="{{ app_settings.event_prefix }}" maxlength="20"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition"
+                           placeholder="EVT-">
+                    <p class="text-xs text-gray-400 mt-1">Preview: <span class="font-medium text-gray-600 dark:text-gray-300" id="event-preview">{{ app_settings.event_prefix }}7</span></p>
+                </div>
+            </div>
+            <button type="submit"
+                    class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                Save Prefixes
+            </button>
+        </form>
+    </div>
+
     <!-- Change Password -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Change Password</h2>
@@ -94,4 +122,15 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('ticket_prefix').addEventListener('input', function() {
+    document.getElementById('ticket-preview').textContent = (this.value || '#') + '42';
+});
+document.getElementById('event_prefix').addEventListener('input', function() {
+    document.getElementById('event-preview').textContent = (this.value || 'EVT-') + '7';
+});
+</script>
 {% endblock %}

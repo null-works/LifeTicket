@@ -180,3 +180,19 @@ class TicketHistory(db.Model):
     old_value = db.Column(db.Text, default="")
     new_value = db.Column(db.Text, default="")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class AppSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_prefix = db.Column(db.String(20), default="#")
+    event_prefix = db.Column(db.String(20), default="EVT-")
+
+    @staticmethod
+    def get():
+        """Return the singleton settings row, creating it if needed."""
+        s = AppSettings.query.first()
+        if not s:
+            s = AppSettings()
+            db.session.add(s)
+            db.session.commit()
+        return s

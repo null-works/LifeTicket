@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User
+from app.models import User, AppSettings
 
 auth = Blueprint("auth", __name__)
 
@@ -31,7 +31,19 @@ def logout():
 @login_required
 def settings():
     users = User.query.order_by(User.username).all()
-    return render_template("settings.html", users=users)
+    app_settings = AppSettings.get()
+    return render_template("settings.html", users=users, app_settings=app_settings)
+
+
+@auth.route("/settings/prefixes", methods=["POST"])
+@login_required
+def update_prefixes():
+    app_settings = AppSettings.get()
+    app_settings.ticket_prefix = request.form.get("ticket_prefix", "#").strip() or "#"
+    app_settings.event_prefix = request.form.get("event_prefix", "EVT-").strip() or "EVT-"
+    db.session.commit()
+    flash("Prefixes updated successfully.", "success")
+    return redirect(url_for("auth.settings"))
 
 
 @auth.route("/settings/change-password", methods=["POST"])

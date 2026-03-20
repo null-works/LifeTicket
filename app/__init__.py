@@ -38,7 +38,14 @@ def create_app():
     @app.context_processor
     def inject_globals():
         from app.version import VERSION
-        return {"today": date.today(), "version": VERSION}
+        from app.models import AppSettings
+        settings = AppSettings.get()
+        return {
+            "today": date.today(),
+            "version": VERSION,
+            "ticket_prefix": settings.ticket_prefix,
+            "event_prefix": settings.event_prefix,
+        }
 
     with app.app_context():
         db.create_all()
