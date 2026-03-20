@@ -727,8 +727,12 @@ def calendar_view():
         date_items.setdefault(ev.date, []).append({
             "id": ev.id,
             "title": ev.title,
+            "description": ev.description or "",
             "color": ev.color,
+            "date": ev.date.isoformat(),
             "start_time": ev.start_time.strftime("%H:%M") if ev.start_time else None,
+            "end_time": ev.end_time.strftime("%H:%M") if ev.end_time else None,
+            "all_day": ev.all_day,
             "type": "event",
         })
     for t in tickets:
@@ -882,6 +886,31 @@ def delete_event(event_id):
     db.session.delete(ev)
     db.session.commit()
     return jsonify({"ok": True})
+
+
+@api.route("/calendar/events/<int:event_id>", methods=["PUT"])
+@login_required
+def update_event(event_id):
+    ev = CalendarEvent.query.get_or_404(event_id)
+    data = request.get_json()
+    title = (data.get("title") or "").strip()
+    if not title:
+        return jsonify({"error": "Title required"}), 400
+    ev.title = title
+    ev.description = (data.get("description") or "").strip()
+    ev.color = data.get("color", ev.color)
+    ev.date = date.fromisoformat(data["date"])
+    ev.all_day = data.get("all_day", True)
+    if ev.all_day:
+        ev.start_time = None
+        ev.end_time = None
+    else:
+        st = data.get("start_time")
+        et = data.get("end_time")
+        ev.start_time = time.fromisoformat(st) if st else None
+        ev.end_time = time.fromisoformat(et) if et else None
+    db.session.commit()
+    return jsonify(ev.to_dict())
 
 
 @api.route("/tickets", methods=["GET"])

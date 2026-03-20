@@ -134,50 +134,118 @@
         </div>
     </div>
 
-    <!-- Detail/Delete Modal -->
+    <!-- Detail / Edit Modal -->
     <div x-show="showDetail" x-cloak
          class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
          @click.self="showDetail = false"
          @keydown.escape.window="showDetail = false">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm border dark:border-gray-700"
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border dark:border-gray-700"
              @click.stop>
-            <div class="px-5 py-4">
-                <div class="flex items-start gap-3">
-                    <span class="w-3 h-3 rounded-full mt-1 flex-shrink-0" :style="`background: ${detailItem.color}`"></span>
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-semibold text-gray-900 dark:text-white" x-text="detailItem.title"></h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="detailDate"></p>
-                        <p x-show="detailItem.start_time" class="text-xs text-gray-500 dark:text-gray-400" x-text="detailItem.start_time"></p>
+
+            <!-- Non-event detail (ticket / job) -->
+            <template x-if="detailItem.type !== 'event'">
+                <div class="px-5 py-4">
+                    <div class="flex items-start gap-3">
+                        <span class="w-3 h-3 rounded-full mt-1 flex-shrink-0" :style="`background: ${detailItem.color}`"></span>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-semibold text-gray-900 dark:text-white" x-text="detailItem.title"></h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="detailDate"></p>
+                        </div>
+                        <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full"
+                              :class="detailItem.type === 'ticket' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'"
+                              x-text="detailItem.type"></span>
                     </div>
-                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full"
-                          :class="detailItem.type === 'ticket' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'"
-                          x-text="detailItem.type"></span>
-                </div>
-                <div class="flex items-center gap-2 mt-4">
-                    <template x-if="detailItem.type === 'event'">
-                        <button @click="deleteEvent(detailItem.id)"
-                                class="flex-1 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 rounded-lg transition font-medium">
-                            Delete Event
+                    <div class="flex items-center gap-2 mt-4">
+                        <template x-if="detailItem.type === 'ticket'">
+                            <a :href="'/ticket/' + detailItem.id"
+                               class="flex-1 text-sm text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 py-2 rounded-lg transition font-medium text-center">
+                                Open Ticket
+                            </a>
+                        </template>
+                        <template x-if="detailItem.type === 'job'">
+                            <a :href="'/jobs/' + detailItem.id + '/edit'"
+                               class="flex-1 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 py-2 rounded-lg transition font-medium text-center">
+                                Open Application
+                            </a>
+                        </template>
+                        <button @click="showDetail = false"
+                                class="flex-1 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 py-2 rounded-lg transition font-medium">
+                            Close
                         </button>
-                    </template>
-                    <template x-if="detailItem.type === 'ticket'">
-                        <a :href="'/ticket/' + detailItem.id"
-                           class="flex-1 text-sm text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 py-2 rounded-lg transition font-medium text-center">
-                            Open Ticket
-                        </a>
-                    </template>
-                    <template x-if="detailItem.type === 'job'">
-                        <a :href="'/jobs/' + detailItem.id + '/edit'"
-                           class="flex-1 text-sm text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 py-2 rounded-lg transition font-medium text-center">
-                            Open Application
-                        </a>
-                    </template>
-                    <button @click="showDetail = false"
-                            class="flex-1 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 py-2 rounded-lg transition font-medium">
-                        Close
-                    </button>
+                    </div>
                 </div>
-            </div>
+            </template>
+
+            <!-- Event edit form -->
+            <template x-if="detailItem.type === 'event'">
+                <div>
+                    <div class="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
+                        <h2 class="font-semibold text-gray-900 dark:text-white">Edit Event</h2>
+                        <button @click="showDetail = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div>
+                            <input type="text" x-model="editEvent.title" placeholder="Event title..."
+                                   class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Date</label>
+                                <input type="date" x-model="editEvent.date"
+                                       class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Color</label>
+                                <div class="flex gap-1.5 flex-wrap pt-1">
+                                    <template x-for="c in colors" :key="c">
+                                        <button @click="editEvent.color = c"
+                                                class="w-6 h-6 rounded-full border-2 transition"
+                                                :style="`background: ${c}`"
+                                                :class="editEvent.color === c ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'">
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                                <input type="checkbox" x-model="editEvent.all_day" class="rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500">
+                                All day
+                            </label>
+                        </div>
+                        <div x-show="!editEvent.all_day" class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">Start</label>
+                                <input type="time" x-model="editEvent.start_time"
+                                       class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-1">End</label>
+                                <input type="time" x-model="editEvent.end_time"
+                                       class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500">
+                            </div>
+                        </div>
+                        <div>
+                            <textarea x-model="editEvent.description" placeholder="Description (optional)"
+                                      class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-brand-500 focus:border-brand-500 resize-none"
+                                      rows="2"></textarea>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button @click="saveEvent()"
+                                    :disabled="!editEvent.title.trim()"
+                                    class="flex-1 bg-brand-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                Save Changes
+                            </button>
+                            <button @click="deleteEvent(detailItem.id)"
+                                    class="text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 px-3 rounded-lg transition font-medium">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 </div>
@@ -195,6 +263,7 @@ function calendarApp() {
         showDetail: false,
         detailItem: {},
         detailDate: '',
+        editEvent: { title: '', description: '', date: '', color: '#6366f1', all_day: true, start_time: '', end_time: '' },
         colors: ['#6366f1', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#64748b'],
         newEvent: {
             title: '',
@@ -223,6 +292,17 @@ function calendarApp() {
         openDetail(item, dateStr) {
             this.detailItem = item;
             this.detailDate = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            if (item.type === 'event') {
+                this.editEvent = {
+                    title: item.title || '',
+                    description: item.description || '',
+                    date: item.date || dateStr,
+                    color: item.color || '#6366f1',
+                    all_day: item.all_day !== false,
+                    start_time: item.start_time || '',
+                    end_time: item.end_time || '',
+                };
+            }
             this.showDetail = true;
         },
 
@@ -247,6 +327,30 @@ function calendarApp() {
                 if (res.ok) location.reload();
             } catch (err) {
                 console.error('Failed to create event:', err);
+            }
+        },
+
+        async saveEvent() {
+            const payload = {
+                title: this.editEvent.title.trim(),
+                description: this.editEvent.description.trim(),
+                date: this.editEvent.date,
+                color: this.editEvent.color,
+                all_day: this.editEvent.all_day,
+            };
+            if (!this.editEvent.all_day) {
+                payload.start_time = this.editEvent.start_time || null;
+                payload.end_time = this.editEvent.end_time || null;
+            }
+            try {
+                const res = await fetch(`/api/calendar/events/${this.detailItem.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (res.ok) location.reload();
+            } catch (err) {
+                console.error('Failed to update event:', err);
             }
         },
 
