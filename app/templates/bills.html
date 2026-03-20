@@ -14,12 +14,19 @@
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
-            <div class="text-2xl font-bold text-red-600 dark:text-red-400">${{ "%.2f" | format(total_due_now) }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Due Now</div>
+            {% if total_this_month > 0 %}
+            <div class="text-2xl font-bold text-red-600 dark:text-red-400">${{ "%.2f" | format(total_this_month) }}</div>
+            {% else %}
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span class="text-xl font-bold text-green-600 dark:text-green-400">$0</span>
+            </div>
+            {% endif %}
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">{{ current_month_label }}</div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
-            <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">${{ "%.2f" | format(total_upcoming) }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Upcoming</div>
+            <div class="text-2xl font-bold {% if total_next_month > 0 %}text-yellow-600 dark:text-yellow-400{% else %}text-gray-400 dark:text-gray-500{% endif %}">${{ "%.2f" | format(total_next_month) }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">{{ next_month_label }}</div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
             <div class="text-2xl font-bold text-brand-600 dark:text-brand-200">${{ "%.2f" | format(monthly_estimate) }}</div>

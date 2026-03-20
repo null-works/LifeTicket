@@ -500,8 +500,22 @@ def bills():
 
     all_bills = Bill.query.all()
     today = date.today()
-    total_due_now = sum(b.amount for b in all_bills if not b.paid and b.due_date and b.due_date <= today)
-    total_upcoming = sum(b.amount for b in all_bills if not b.paid and (not b.due_date or b.due_date > today))
+    current_month_start = today.replace(day=1)
+    if today.month == 12:
+        next_month_start = today.replace(year=today.year + 1, month=1, day=1)
+        month_after_next = today.replace(year=today.year + 1, month=2, day=1)
+    elif today.month == 11:
+        next_month_start = today.replace(month=12, day=1)
+        month_after_next = today.replace(year=today.year + 1, month=1, day=1)
+    else:
+        next_month_start = today.replace(month=today.month + 1, day=1)
+        month_after_next = today.replace(month=today.month + 2, day=1)
+
+    current_month_label = current_month_start.strftime("%B")
+    next_month_label = next_month_start.strftime("%B")
+
+    total_this_month = sum(b.amount for b in all_bills if not b.paid and b.due_date and current_month_start <= b.due_date < next_month_start)
+    total_next_month = sum(b.amount for b in all_bills if not b.paid and b.due_date and next_month_start <= b.due_date < month_after_next)
 
     # Monthly cost estimate based on frequency
     freq_multiplier = {"weekly": 4.33, "biweekly": 2.17, "monthly": 1, "quarterly": 1/3, "yearly": 1/12, "once": 0}
@@ -512,8 +526,10 @@ def bills():
         bills=bills_list,
         bill_frequencies=BILL_FREQUENCIES,
         show=show,
-        total_due_now=total_due_now,
-        total_upcoming=total_upcoming,
+        total_this_month=total_this_month,
+        total_next_month=total_next_month,
+        current_month_label=current_month_label,
+        next_month_label=next_month_label,
         monthly_estimate=monthly_estimate,
         editing=None,
     )
@@ -546,8 +562,22 @@ def bill_edit(bill_id):
 
     all_bills = Bill.query.all()
     today = date.today()
-    total_due_now = sum(b.amount for b in all_bills if not b.paid and b.due_date and b.due_date <= today)
-    total_upcoming = sum(b.amount for b in all_bills if not b.paid and (not b.due_date or b.due_date > today))
+    current_month_start = today.replace(day=1)
+    if today.month == 12:
+        next_month_start = today.replace(year=today.year + 1, month=1, day=1)
+        month_after_next = today.replace(year=today.year + 1, month=2, day=1)
+    elif today.month == 11:
+        next_month_start = today.replace(month=12, day=1)
+        month_after_next = today.replace(year=today.year + 1, month=1, day=1)
+    else:
+        next_month_start = today.replace(month=today.month + 1, day=1)
+        month_after_next = today.replace(month=today.month + 2, day=1)
+
+    current_month_label = current_month_start.strftime("%B")
+    next_month_label = next_month_start.strftime("%B")
+
+    total_this_month = sum(b.amount for b in all_bills if not b.paid and b.due_date and current_month_start <= b.due_date < next_month_start)
+    total_next_month = sum(b.amount for b in all_bills if not b.paid and b.due_date and next_month_start <= b.due_date < month_after_next)
 
     freq_multiplier = {"weekly": 4.33, "biweekly": 2.17, "monthly": 1, "quarterly": 1/3, "yearly": 1/12, "once": 0}
     monthly_estimate = sum(b.amount * freq_multiplier.get(b.frequency, 0) for b in all_bills if not b.paid or b.is_recurring)
@@ -557,8 +587,10 @@ def bill_edit(bill_id):
         bills=bills_list,
         bill_frequencies=BILL_FREQUENCIES,
         show=show,
-        total_due_now=total_due_now,
-        total_upcoming=total_upcoming,
+        total_this_month=total_this_month,
+        total_next_month=total_next_month,
+        current_month_label=current_month_label,
+        next_month_label=next_month_label,
         monthly_estimate=monthly_estimate,
         editing=bill,
     )
