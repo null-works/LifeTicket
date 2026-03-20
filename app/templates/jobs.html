@@ -110,6 +110,70 @@
         </form>
     </div>
 
+    <!-- Resume Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-5 mb-6">
+        <h2 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v6h6v10H6z"/></svg>
+            Resume
+        </h2>
+        {% set has_resume = jobs | selectattr('resume_filename') | list %}
+        {% if has_resume %}
+        <div class="space-y-2">
+            {% for job in jobs if job.resume_filename %}
+            <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg px-4 py-2.5">
+                <div class="flex items-center gap-3 min-w-0">
+                    <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v6h6v10H6z"/></svg>
+                    <div class="min-w-0">
+                        <a href="/static/uploads/{{ job.resume_filename }}" target="_blank"
+                           class="text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline truncate block">
+                            {{ job.resume_original_name }}
+                        </a>
+                        <span class="text-xs text-gray-400 dark:text-gray-500">{{ job.company }} — {{ job.position }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <a href="/static/uploads/{{ job.resume_filename }}" target="_blank"
+                       class="text-gray-400 hover:text-brand-500 dark:hover:text-brand-400 transition p-1" title="View PDF">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </a>
+                    <form method="POST" action="/jobs/{{ job.id }}/resume/delete" class="inline">
+                        <button type="submit" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition p-1" title="Remove resume">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if jobs %}
+        <div class="{% if has_resume %}mt-3 pt-3 border-t dark:border-gray-700{% endif %}">
+            <div x-data="{ uploading: false }" class="flex items-center gap-3">
+                <form x-show="uploading" x-cloak method="POST" enctype="multipart/form-data" class="flex items-center gap-3 flex-1"
+                      x-bind:action="document.getElementById('resume-job-select')?.value ? '/jobs/' + document.getElementById('resume-job-select').value + '/resume' : '#'">
+                    <select id="resume-job-select" class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500"
+                            onchange="this.form.action = '/jobs/' + this.value + '/resume'">
+                        {% for job in jobs %}
+                        <option value="{{ job.id }}">{{ job.company }} — {{ job.position }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="file" name="resume" accept=".pdf" required
+                           class="text-sm text-gray-500 dark:text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-50 file:text-brand-600 dark:file:bg-brand-900/30 dark:file:text-brand-400 hover:file:bg-brand-100 dark:hover:file:bg-brand-900/50 file:cursor-pointer file:transition">
+                    <button type="submit" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition flex-shrink-0">Upload</button>
+                    <button type="button" @click="uploading = false" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
+                </form>
+                <button x-show="!uploading" @click="uploading = true"
+                        class="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Upload Resume PDF
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 dark:text-gray-500">Add a job application first, then upload your resume here.</p>
+        {% endif %}
+    </div>
+
     <!-- Applications List -->
     <div class="space-y-3">
         {% for job in jobs %}

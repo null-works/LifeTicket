@@ -478,8 +478,63 @@ def job_edit(job_id):
 @login_required
 def job_delete(job_id):
     job = JobApplication.query.get_or_404(job_id)
+    if job.resume_filename:
+        filepath = os.path.join(current_app.root_path, "static", "uploads", job.resume_filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
     db.session.delete(job)
     db.session.commit()
+    return redirect(url_for("main.jobs"))
+
+
+@main.route("/jobs/<int:job_id>/resume", methods=["POST"])
+@login_required
+def job_upload_resume(job_id):
+    job = JobApplication.query.get_or_404(job_id)
+    file = request.files.get("resume")
+    if not file or not file.filename:
+        return redirect(url_for("main.jobs"))
+
+    original = secure_filename(file.filename)
+    ext = os.path.splitext(original)[1].lower().lstrip(".")
+    if ext != "pdf":
+        return redirect(url_for("main.jobs"))
+
+    # Remove old resume if exists
+    if job.resume_filename:
+        old_path = os.path.join(current_app.root_path, "static", "uploads", job.resume_filename)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    upload_dir = os.path.join(current_app.root_path, "static", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    unique_name = f"{uuid.uuid4().hex}_{original}"
+    path = os.path.join(upload_dir, unique_name)
+    file.save(path)
+    size = os.path.getsize(path)
+
+    if size > MAX_FILE_SIZE:
+        os.remove(path)
+        return redirect(url_for("main.jobs"))
+
+    job.resume_filename = unique_name
+    job.resume_original_name = original
+    db.session.commit()
+    return redirect(url_for("main.jobs"))
+
+
+@main.route("/jobs/<int:job_id>/resume/delete", methods=["POST"])
+@login_required
+def job_delete_resume(job_id):
+    job = JobApplication.query.get_or_404(job_id)
+    if job.resume_filename:
+        filepath = os.path.join(current_app.root_path, "static", "uploads", job.resume_filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        job.resume_filename = ""
+        job.resume_original_name = ""
+        db.session.commit()
     return redirect(url_for("main.jobs"))
 
 

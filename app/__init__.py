@@ -67,6 +67,14 @@ def _add_missing_columns():
         db.session.commit()
         print("[LifeTicket] Added 'emoji' column to ticket table")
 
+    if "job_application" in inspector.get_table_names():
+        job_cols = [c["name"] for c in inspector.get_columns("job_application")]
+        if "resume_filename" not in job_cols:
+            db.session.execute(text("ALTER TABLE job_application ADD COLUMN resume_filename VARCHAR(255) DEFAULT ''"))
+            db.session.execute(text("ALTER TABLE job_application ADD COLUMN resume_original_name VARCHAR(255) DEFAULT ''"))
+            db.session.commit()
+            print("[LifeTicket] Added resume columns to job_application table")
+
 
 def _seed_statuses():
     """Ensure default statuses exist in the Status table."""

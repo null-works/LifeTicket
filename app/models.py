@@ -223,6 +223,8 @@ class JobApplication(db.Model):
     date_applied = db.Column(db.Date, nullable=True)
     date_interview = db.Column(db.Date, nullable=True)
     date_followup = db.Column(db.Date, nullable=True)
+    resume_filename = db.Column(db.String(255), default="")
+    resume_original_name = db.Column(db.String(255), default="")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime,
