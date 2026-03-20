@@ -20,11 +20,60 @@ api = Blueprint("api", __name__)
 
 @main.route("/")
 @login_required
-def dashboard():
+def home():
+    today_date = date.today()
+    tickets = Ticket.query.all()
+    statuses = Status.query.order_by(Status.position).all()
+    closed_names = {s.name for s in statuses if s.is_closed}
+    open_tickets = [t for t in tickets if t.status not in closed_names]
+
+    ticket_stats = {
+        "total": len(tickets),
+        "open": len(open_tickets),
+        "overdue": sum(1 for t in open_tickets if t.due_date and t.due_date < today_date),
+        "urgent": sum(1 for t in open_tickets if t.priority == "urgent"),
+    }
+
+    job_apps = JobApplication.query.all()
+    active_jobs = [j for j in job_apps if j.is_active]
+    job_stats = {
+        "total": len(job_apps),
+        "active": len(active_jobs),
+        "interviews": sum(1 for j in active_jobs if j.date_interview and j.date_interview >= today_date),
+        "offers": sum(1 for j in job_apps if j.status == "offer"),
+    }
+
+    grocery_items = GroceryItem.query.all()
+    grocery_stats = {
+        "total": len(grocery_items),
+        "unchecked": sum(1 for g in grocery_items if not g.checked),
+    }
+
+    from app.models import CalendarEvent as CE
+    upcoming_events = CE.query.filter(CE.date >= today_date).order_by(CE.date, CE.start_time).limit(5).all()
+
+    recent_tickets = sorted(tickets, key=lambda t: t.created_at, reverse=True)[:5]
+    recent_jobs = sorted(job_apps, key=lambda j: j.updated_at, reverse=True)[:5]
+
+    return render_template(
+        "home.html",
+        ticket_stats=ticket_stats,
+        job_stats=job_stats,
+        grocery_stats=grocery_stats,
+        upcoming_events=upcoming_events,
+        recent_tickets=recent_tickets,
+        recent_jobs=recent_jobs,
+        statuses=statuses,
+    )
+
+
+@main.route("/tickets")
+@login_required
+def tickets_dashboard():
     tickets = Ticket.query.all()
     categories = Category.query.order_by(Category.name).all()
     statuses = Status.query.order_by(Status.position).all()
-    today = date.today()
+    today_date = date.today()
 
     closed_names = {s.name for s in statuses if s.is_closed}
     status_counts = {s.name: 0 for s in statuses}
@@ -37,12 +86,12 @@ def dashboard():
         "overdue": sum(
             1
             for t in tickets
-            if t.due_date and t.due_date < today and t.status not in closed_names
+            if t.due_date and t.due_date < today_date and t.status not in closed_names
         ),
         "urgent": sum(1 for t in tickets if t.priority == "urgent" and t.status not in closed_names),
     }
     return render_template(
-        "dashboard.html", stats=stats, statuses=statuses, status_counts=status_counts,
+        "tickets_dashboard.html", stats=stats, statuses=statuses, status_counts=status_counts,
         categories=categories, tickets=tickets,
     )
 
@@ -109,7 +158,7 @@ def ticket_new():
         ticket = _save_ticket(Ticket(), request.form)
         db.session.add(ticket)
         db.session.commit()
-        return redirect(url_for("main.board"))
+        return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
 
     categories = Category.query.order_by(Category.name).all()
     tags = Tag.query.order_by(Tag.name).all()
@@ -138,7 +187,7 @@ def ticket_delete(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
     db.session.delete(ticket)
     db.session.commit()
-    return redirect(url_for("main.board"))
+    return redirect(url_for("main.tickets_dashboard"))
 
 
 @main.route("/ticket/<int:ticket_id>")

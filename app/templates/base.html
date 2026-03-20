@@ -47,15 +47,12 @@
 
                 <!-- Desktop nav -->
                 <div class="hidden md:flex items-center space-x-1">
-                    <a href="/" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Dashboard</a>
-                    <a href="/board" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Board</a>
-                    <a href="/list" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">List</a>
-                    <a href="/categories" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Categories</a>
-                    <a href="/statuses" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Statuses</a>
+                    <a href="/" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Home</a>
+                    <a href="/tickets" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Tickets</a>
+                    <a href="/jobs" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Jobs</a>
                     <a href="/calendar" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Calendar</a>
                     <a href="/grocery" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Grocery</a>
-                    <a href="/jobs" class="text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-lg text-sm font-medium transition">Jobs</a>
-                    <a href="/ticket/new" class="ml-2 bg-white text-brand-600 hover:bg-brand-50 px-3 py-1.5 rounded-lg text-sm font-semibold transition">+ New Ticket</a>
+                    <a href="/ticket/new" class="ml-2 bg-white text-brand-600 hover:bg-brand-50 px-3 py-1.5 rounded-lg text-sm font-semibold transition">+ New</a>
                     <!-- Dark mode toggle -->
                     <button onclick="toggleTheme()" class="ml-2 text-white/60 hover:text-white hover:bg-white/10 p-2 rounded-lg transition" title="Toggle dark mode">
                         <svg class="w-4 h-4 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
@@ -89,15 +86,12 @@
         <div x-show="mobileMenu" x-cloak @click.away="mobileMenu = false"
              x-transition class="md:hidden bg-brand-700 border-t border-brand-500">
             <div class="px-4 py-3 space-y-1">
-                <a href="/" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Dashboard</a>
-                <a href="/board" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Board</a>
-                <a href="/list" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">List</a>
-                <a href="/categories" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Categories</a>
-                <a href="/statuses" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Statuses</a>
+                <a href="/" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Home</a>
+                <a href="/tickets" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Tickets</a>
+                <a href="/jobs" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Jobs</a>
                 <a href="/calendar" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Calendar</a>
                 <a href="/grocery" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Grocery</a>
-                <a href="/jobs" class="block text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm">Jobs</a>
-                <a href="/ticket/new" class="block bg-white text-brand-600 px-3 py-2 rounded-lg text-sm font-semibold text-center mt-2">+ New Ticket</a>
+                <a href="/ticket/new" class="block bg-white text-brand-600 px-3 py-2 rounded-lg text-sm font-semibold text-center mt-2">+ New</a>
                 <a href="/settings" class="flex items-center gap-2 text-white/80 hover:text-white px-3 py-2 rounded-lg text-sm mt-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
                     Settings

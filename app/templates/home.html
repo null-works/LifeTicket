@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Home — LifeTicket{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Home</h1>
+    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Everything at a glance</p>
+</div>
+
+<!-- Feature Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+    <!-- Tickets -->
+    <a href="/tickets" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-5 hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/50 transition block group">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-brand-600 dark:text-brand-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <h2 class="font-semibold text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition">Tickets</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ ticket_stats.open }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Open</div>
+            </div>
+            <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ ticket_stats.total }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Total</div>
+            </div>
+            {% if ticket_stats.overdue > 0 %}
+            <div>
+                <div class="text-xl font-bold text-red-600 dark:text-red-400">{{ ticket_stats.overdue }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Overdue</div>
+            </div>
+            {% endif %}
+            {% if ticket_stats.urgent > 0 %}
+            <div>
+                <div class="text-xl font-bold text-orange-600 dark:text-orange-400">{{ ticket_stats.urgent }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Urgent</div>
+            </div>
+            {% endif %}
+        </div>
+    </a>
+
+    <!-- Jobs -->
+    <a href="/jobs" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-5 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500/50 transition block group">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <h2 class="font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-300 transition">Jobs</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ job_stats.active }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Active</div>
+            </div>
+            <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ job_stats.total }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Total</div>
+            </div>
+            {% if job_stats.interviews > 0 %}
+            <div>
+                <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ job_stats.interviews }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Interviews</div>
+            </div>
+            {% endif %}
+            {% if job_stats.offers > 0 %}
+            <div>
+                <div class="text-xl font-bold text-green-600 dark:text-green-400">{{ job_stats.offers }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Offers</div>
+            </div>
+            {% endif %}
+        </div>
+    </a>
+
+    <!-- Calendar -->
+    <a href="/calendar" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-5 hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-500/50 transition block group">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <h2 class="font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition">Calendar</h2>
+        </div>
+        {% if upcoming_events %}
+        <div class="space-y-1.5">
+            {% for ev in upcoming_events[:3] %}
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: {{ ev.color }}"></span>
+                <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">{{ ev.title }}</span>
+                <span class="text-[11px] text-gray-400 flex-shrink-0">{{ ev.date.strftime('%b %d') }}</span>
+            </div>
+            {% endfor %}
+            {% if upcoming_events | length > 3 %}
+            <div class="text-[11px] text-gray-400 mt-1">+{{ upcoming_events | length - 3 }} more</div>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 dark:text-gray-500">No upcoming events</p>
+        {% endif %}
+    </a>
+
+    <!-- Grocery -->
+    <a href="/grocery" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-5 hover:shadow-md hover:border-rose-300 dark:hover:border-rose-500/50 transition block group">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-rose-600 dark:text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+            </div>
+            <h2 class="font-semibold text-gray-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-300 transition">Grocery</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ grocery_stats.unchecked }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">To Buy</div>
+            </div>
+            <div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ grocery_stats.total }}</div>
+                <div class="text-[11px] text-gray-400 uppercase tracking-wider">Items</div>
+            </div>
+        </div>
+    </a>
+
+</div>
+
+<!-- Recent Activity -->
+<div class="grid md:grid-cols-2 gap-6">
+
+    <!-- Recent Tickets -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700">
+        <div class="px-5 py-4 border-b dark:border-gray-700 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 dark:text-white">Recent Tickets</h2>
+            <a href="/tickets" class="text-brand-600 dark:text-brand-200 text-sm hover:underline">View all</a>
+        </div>
+        <div class="divide-y dark:divide-gray-700">
+            {% for ticket in recent_tickets %}
+            <a href="/ticket/{{ ticket.id }}" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                <span class="w-2 h-2 rounded-full flex-shrink-0
+                    {% if ticket.priority == 'urgent' %}bg-red-500
+                    {% elif ticket.priority == 'high' %}bg-orange-500
+                    {% elif ticket.priority == 'medium' %}bg-yellow-500
+                    {% else %}bg-gray-400{% endif %}"></span>
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{% if ticket.emoji %}{{ ticket.emoji }} {% endif %}{{ ticket.title }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ ticket.status_obj.label if ticket.status_obj else ticket.status | replace('_', ' ') | title }}
+                    </div>
+                </div>
+                {% if ticket.due_date %}
+                <span class="text-xs {% if ticket.due_date < today and ticket.status_obj and not ticket.status_obj.is_closed %}text-red-600 dark:text-red-400 font-semibold{% else %}text-gray-400{% endif %}">
+                    {{ ticket.due_date.strftime('%b %d') }}
+                </span>
+                {% endif %}
+            </a>
+            {% else %}
+            <div class="px-5 py-8 text-center text-gray-400 text-sm">No tickets yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Job Applications -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700">
+        <div class="px-5 py-4 border-b dark:border-gray-700 flex items-center justify-between">
+            <h2 class="font-semibold text-gray-900 dark:text-white">Recent Applications</h2>
+            <a href="/jobs" class="text-brand-600 dark:text-brand-200 text-sm hover:underline">View all</a>
+        </div>
+        <div class="divide-y dark:divide-gray-700">
+            {% for job in recent_jobs %}
+            <a href="/jobs/{{ job.id }}/edit" class="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                     style="background: {{ job.status_color }}">{{ job.company[:2] | upper }}</div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ job.position }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ job.company }}{% if job.location %} · {{ job.location }}{% endif %}</div>
+                </div>
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium text-white flex-shrink-0" style="background: {{ job.status_color }}">{{ job.status_label }}</span>
+            </a>
+            {% else %}
+            <div class="px-5 py-8 text-center text-gray-400 text-sm">No applications yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

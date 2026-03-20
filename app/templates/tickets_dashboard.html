@@ -1,10 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — LifeTicket{% endblock %}
+{% block title %}Tickets — LifeTicket{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Your ticket overview at a glance</p>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tickets</h1>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Your ticket overview at a glance</p>
+    </div>
+    <div class="flex items-center gap-2">
+        <a href="/board" class="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border dark:border-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition">Board</a>
+        <a href="/list" class="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border dark:border-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition">List</a>
+        <a href="/ticket/new" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">+ New</a>
+    </div>
 </div>
 
 <!-- Stats Grid -->
