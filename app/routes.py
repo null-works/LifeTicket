@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory
+from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory, JobApplication, JOB_STATUSES
 from datetime import date, datetime, time
 import calendar as cal_mod
 
@@ -338,6 +338,78 @@ def grocery_clear_checked():
     return redirect(url_for("main.grocery"))
 
 
+@main.route("/jobs", methods=["GET", "POST"])
+@login_required
+def jobs():
+    if request.method == "POST":
+        company = request.form.get("company", "").strip()
+        position = request.form.get("position", "").strip()
+        if company and position:
+            job = JobApplication(
+                company=company,
+                position=position,
+                url=request.form.get("url", "").strip(),
+                status=request.form.get("status", "bookmarked"),
+                salary=request.form.get("salary", "").strip(),
+                location=request.form.get("location", "").strip(),
+                notes=request.form.get("notes", "").strip(),
+            )
+            da = request.form.get("date_applied")
+            job.date_applied = date.fromisoformat(da) if da else None
+            di = request.form.get("date_interview")
+            job.date_interview = date.fromisoformat(di) if di else None
+            df = request.form.get("date_followup")
+            job.date_followup = date.fromisoformat(df) if df else None
+            db.session.add(job)
+            db.session.commit()
+        return redirect(url_for("main.jobs"))
+
+    status_filter = request.args.get("status")
+    query = JobApplication.query
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    jobs_list = query.order_by(JobApplication.updated_at.desc()).all()
+    return render_template("jobs.html", jobs=jobs_list, job_statuses=JOB_STATUSES, editing=None)
+
+
+@main.route("/jobs/<int:job_id>/edit", methods=["GET", "POST"])
+@login_required
+def job_edit(job_id):
+    job = JobApplication.query.get_or_404(job_id)
+    if request.method == "POST":
+        job.company = request.form.get("company", "").strip() or job.company
+        job.position = request.form.get("position", "").strip() or job.position
+        job.url = request.form.get("url", "").strip()
+        job.status = request.form.get("status", job.status)
+        job.salary = request.form.get("salary", "").strip()
+        job.location = request.form.get("location", "").strip()
+        job.notes = request.form.get("notes", "").strip()
+        da = request.form.get("date_applied")
+        job.date_applied = date.fromisoformat(da) if da else None
+        di = request.form.get("date_interview")
+        job.date_interview = date.fromisoformat(di) if di else None
+        df = request.form.get("date_followup")
+        job.date_followup = date.fromisoformat(df) if df else None
+        db.session.commit()
+        return redirect(url_for("main.jobs"))
+
+    status_filter = request.args.get("status")
+    query = JobApplication.query
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    jobs_list = query.order_by(JobApplication.updated_at.desc()).all()
+    return render_template("jobs.html", jobs=jobs_list, job_statuses=JOB_STATUSES, editing=job)
+
+
+@main.route("/jobs/<int:job_id>/delete", methods=["POST"])
+@login_required
+def job_delete(job_id):
+    job = JobApplication.query.get_or_404(job_id)
+    db.session.delete(job)
+    db.session.commit()
+    return redirect(url_for("main.jobs"))
+
+
 @main.route("/calendar")
 @login_required
 def calendar_view():
@@ -387,6 +459,33 @@ def calendar_view():
             "start_time": None,
             "type": "ticket",
         })
+
+    # Fetch active job applications with dates in range
+    from sqlalchemy import or_
+    job_apps = JobApplication.query.filter(
+        JobApplication.status.notin_(["rejected", "withdrawn"]),
+        or_(
+            JobApplication.date_interview.between(grid_dates[0], grid_dates[-1]),
+            JobApplication.date_followup.between(grid_dates[0], grid_dates[-1]),
+        ),
+    ).all()
+    for j in job_apps:
+        if j.date_interview and grid_dates[0] <= j.date_interview <= grid_dates[-1]:
+            date_items.setdefault(j.date_interview, []).append({
+                "id": j.id,
+                "title": f"Interview: {j.company}",
+                "color": "#f59e0b",
+                "start_time": None,
+                "type": "job",
+            })
+        if j.date_followup and grid_dates[0] <= j.date_followup <= grid_dates[-1]:
+            date_items.setdefault(j.date_followup, []).append({
+                "id": j.id,
+                "title": f"Follow-up: {j.company}",
+                "color": "#8b5cf6",
+                "start_time": None,
+                "type": "job",
+            })
 
     # Prev/next month
     if month == 1:

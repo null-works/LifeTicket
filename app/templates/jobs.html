@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Job Applications — LifeTicket{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Job Applications</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Track your job search</p>
+        </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="flex gap-2 flex-wrap mb-4">
+        <a href="/jobs" class="text-xs px-2.5 py-1 rounded-full font-medium transition
+            {% if not request.args.get('status') %}bg-brand-600 text-white{% else %}bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            All ({{ jobs | length }})
+        </a>
+        {% for key, label, color in job_statuses %}
+        <a href="/jobs?status={{ key }}" class="text-xs px-2.5 py-1 rounded-full font-medium transition
+            {% if request.args.get('status') == key %}text-white{% else %}text-gray-600 dark:text-gray-400 hover:opacity-80{% endif %}"
+           style="{% if request.args.get('status') == key %}background: {{ color }}{% else %}background: {{ color }}20; color: {{ color }}{% endif %}">
+            {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Add / Edit Form -->
+    <div x-data="{ open: {{ 'true' if editing else 'false' }} }" class="mb-6">
+        <button x-show="!open" @click="open = true"
+                class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400 hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-300 transition text-center">
+            + Add Application
+        </button>
+        <form x-show="open" x-cloak method="POST"
+              action="{{ '/jobs/' ~ editing.id ~ '/edit' if editing else '/jobs' }}"
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-5">
+            <h2 class="font-semibold text-gray-900 dark:text-white mb-4">{{ 'Edit' if editing else 'New' }} Application</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Company *</label>
+                    <input type="text" name="company" required value="{{ editing.company if editing else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="e.g. Acme Corp">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Position *</label>
+                    <input type="text" name="position" required value="{{ editing.position if editing else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="e.g. Software Engineer">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Job URL</label>
+                    <input type="url" name="url" value="{{ editing.url if editing else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="https://...">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                    <select name="status" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500">
+                        {% for key, label, color in job_statuses %}
+                        <option value="{{ key }}" {% if editing and editing.status == key %}selected{% elif not editing and key == 'applied' %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Salary / Compensation</label>
+                    <input type="text" name="salary" value="{{ editing.salary if editing else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="e.g. $120k-$150k">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Location</label>
+                    <input type="text" name="location" value="{{ editing.location if editing else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="e.g. Remote, NYC">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Date Applied</label>
+                    <input type="date" name="date_applied" value="{{ editing.date_applied.isoformat() if editing and editing.date_applied else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Interview Date</label>
+                    <input type="date" name="date_interview" value="{{ editing.date_interview.isoformat() if editing and editing.date_interview else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Follow-up Date</label>
+                    <input type="date" name="date_followup" value="{{ editing.date_followup.isoformat() if editing and editing.date_followup else '' }}"
+                           class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Notes</label>
+                    <textarea name="notes" rows="2"
+                              class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm px-3 py-2 border focus:ring-brand-500 focus:border-brand-500 resize-none"
+                              placeholder="Contact info, interview prep, etc.">{{ editing.notes if editing else '' }}</textarea>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 mt-4">
+                <button type="submit" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-700 transition">
+                    {{ 'Save Changes' if editing else 'Add Application' }}
+                </button>
+                {% if editing %}
+                <a href="/jobs" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</a>
+                {% else %}
+                <button type="button" @click="open = false" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Cancel</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Applications List -->
+    <div class="space-y-3">
+        {% for job in jobs %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 hover:shadow-md transition">
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                     style="background: {{ job.status_color }}">
+                    {{ job.company[:2] | upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <h3 class="font-medium text-gray-900 dark:text-white">{{ job.position }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ job.company }}
+                                {% if job.location %}<span class="text-gray-300 dark:text-gray-600 mx-1">&middot;</span>{{ job.location }}{% endif %}
+                            </p>
+                        </div>
+                        <span class="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium text-white" style="background: {{ job.status_color }}">
+                            {{ job.status_label }}
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-400 dark:text-gray-500">
+                        {% if job.salary %}
+                        <span>{{ job.salary }}</span>
+                        {% endif %}
+                        {% if job.date_applied %}
+                        <span>Applied {{ job.date_applied.strftime('%b %d, %Y') }}</span>
+                        {% endif %}
+                        {% if job.date_interview %}
+                        <span class="{% if job.date_interview >= today %}text-amber-600 dark:text-amber-400 font-medium{% endif %}">
+                            Interview {{ job.date_interview.strftime('%b %d, %Y') }}
+                        </span>
+                        {% endif %}
+                        {% if job.date_followup %}
+                        <span class="{% if job.date_followup <= today and job.is_active %}text-red-500 dark:text-red-400 font-medium{% endif %}">
+                            Follow-up {{ job.date_followup.strftime('%b %d') }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if job.notes %}
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-1">{{ job.notes }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    {% if job.url %}
+                    <a href="{{ job.url }}" target="_blank" class="text-gray-300 hover:text-brand-500 dark:text-gray-600 dark:hover:text-brand-400 transition p-1" title="Open listing">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                    {% endif %}
+                    <a href="/jobs/{{ job.id }}/edit" class="text-gray-300 hover:text-brand-500 dark:text-gray-600 dark:hover:text-brand-400 transition p-1" title="Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    <form method="POST" action="/jobs/{{ job.id }}/delete" onsubmit="return confirm('Delete this application?')">
+                        <button type="submit" class="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition p-1" title="Delete">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-8 text-center text-gray-400 text-sm">
+            No applications yet. Start tracking your job search!
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

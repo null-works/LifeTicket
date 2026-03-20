@@ -196,3 +196,48 @@ class AppSettings(db.Model):
             db.session.add(s)
             db.session.commit()
         return s
+
+
+JOB_STATUSES = [
+    ("bookmarked", "Bookmarked", "#6366f1"),
+    ("applied", "Applied", "#3b82f6"),
+    ("phone_screen", "Phone Screen", "#8b5cf6"),
+    ("interview", "Interview", "#f59e0b"),
+    ("offer", "Offer", "#22c55e"),
+    ("rejected", "Rejected", "#ef4444"),
+    ("withdrawn", "Withdrawn", "#6b7280"),
+]
+
+JOB_STATUS_MAP = {key: (label, color) for key, label, color in JOB_STATUSES}
+
+
+class JobApplication(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company = db.Column(db.String(200), nullable=False)
+    position = db.Column(db.String(200), nullable=False)
+    url = db.Column(db.String(500), default="")
+    status = db.Column(db.String(30), default="bookmarked")
+    salary = db.Column(db.String(100), default="")
+    location = db.Column(db.String(200), default="")
+    notes = db.Column(db.Text, default="")
+    date_applied = db.Column(db.Date, nullable=True)
+    date_interview = db.Column(db.Date, nullable=True)
+    date_followup = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    @property
+    def status_label(self):
+        return JOB_STATUS_MAP.get(self.status, (self.status, "#6b7280"))[0]
+
+    @property
+    def status_color(self):
+        return JOB_STATUS_MAP.get(self.status, (self.status, "#6b7280"))[1]
+
+    @property
+    def is_active(self):
+        return self.status not in ("rejected", "withdrawn")
