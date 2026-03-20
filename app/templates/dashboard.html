@@ -9,26 +9,26 @@
 
 <!-- Stats Grid -->
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+    <a href="/list" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/50 transition block">
         <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Total</div>
-    </div>
+    </a>
     {% for s in statuses %}
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+    <a href="/list?status={{ s.name }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/50 transition block">
         <div class="text-2xl font-bold" style="color: {{ s.color }}">{{ status_counts[s.name] }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">{{ s.label }}</div>
-    </div>
+    </a>
     {% endfor %}
 </div>
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+    <a href="/list?overdue=1" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 hover:shadow-md hover:border-red-300 dark:hover:border-red-500/50 transition block">
         <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats.overdue }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Overdue</div>
-    </div>
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4">
+    </a>
+    <a href="/list?priority=urgent" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-4 hover:shadow-md hover:border-orange-300 dark:hover:border-orange-500/50 transition block">
         <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ stats.urgent }}</div>
         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Urgent</div>
-    </div>
+    </a>
 </div>
 
 <!-- Quick Actions -->

@@ -39,6 +39,11 @@
             <option value="priority" {% if request.args.get('sort') == 'priority' %}selected{% endif %}>Priority</option>
             <option value="title" {% if request.args.get('sort') == 'title' %}selected{% endif %}>Title</option>
         </select>
+        <label class="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+            <input type="checkbox" name="overdue" value="1" {% if request.args.get('overdue') %}checked{% endif %}
+                   class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500">
+            Overdue
+        </label>
         <button type="submit" class="w-full md:w-auto bg-brand-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-brand-700 transition">Filter</button>
         <a href="/list" class="block text-center md:inline text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Clear</a>
     </form>

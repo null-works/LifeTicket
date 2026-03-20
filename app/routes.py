@@ -77,6 +77,8 @@ def ticket_list():
     sort = request.args.get("sort", "created_at")
     order = request.args.get("order", "desc")
 
+    overdue = request.args.get("overdue")
+
     query = Ticket.query
     if status:
         query = query.filter_by(status=status)
@@ -84,6 +86,12 @@ def ticket_list():
         query = query.filter_by(priority=priority)
     if category_id:
         query = query.filter_by(category_id=category_id)
+    if overdue:
+        closed_names = [s.name for s in Status.query.filter_by(is_closed=True).all()]
+        query = query.filter(
+            Ticket.due_date < date.today(),
+            Ticket.status.notin_(closed_names),
+        )
 
     sort_col = getattr(Ticket, sort, Ticket.created_at)
     query = query.order_by(sort_col.desc() if order == "desc" else sort_col.asc())
