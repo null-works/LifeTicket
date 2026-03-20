@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from app import db
-from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory, JobApplication, JOB_STATUSES
+from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory, JobApplication, JOB_STATUSES, Bill, BILL_FREQUENCIES
 from datetime import date, datetime, time
 import calendar as cal_mod
 
@@ -49,6 +49,15 @@ def home():
         "unchecked": sum(1 for g in grocery_items if not g.checked),
     }
 
+    all_bills = Bill.query.all()
+    unpaid_bills = [b for b in all_bills if not b.paid]
+    bill_stats = {
+        "total": len(all_bills),
+        "unpaid": len(unpaid_bills),
+        "unpaid_amount": sum(b.amount for b in unpaid_bills),
+        "overdue": sum(1 for b in unpaid_bills if b.is_overdue),
+    }
+
     from app.models import CalendarEvent as CE
     upcoming_events = CE.query.filter(CE.date >= today_date).order_by(CE.date, CE.start_time).limit(5).all()
 
@@ -60,6 +69,7 @@ def home():
         ticket_stats=ticket_stats,
         job_stats=job_stats,
         grocery_stats=grocery_stats,
+        bill_stats=bill_stats,
         upcoming_events=upcoming_events,
         recent_tickets=recent_tickets,
         recent_jobs=recent_jobs,
@@ -459,6 +469,97 @@ def job_delete(job_id):
     return redirect(url_for("main.jobs"))
 
 
+@main.route("/bills", methods=["GET", "POST"])
+@login_required
+def bills():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        amount = request.form.get("amount", "0").strip()
+        if name:
+            bill = Bill(
+                name=name,
+                amount=float(amount) if amount else 0.0,
+                frequency=request.form.get("frequency", "monthly"),
+                category=request.form.get("category", "").strip(),
+                auto_pay=request.form.get("auto_pay") == "on",
+                notes=request.form.get("notes", "").strip(),
+            )
+            due = request.form.get("due_date")
+            bill.due_date = date.fromisoformat(due) if due else None
+            db.session.add(bill)
+            db.session.commit()
+        return redirect(url_for("main.bills"))
+
+    show = request.args.get("show", "unpaid")
+    query = Bill.query
+    if show == "unpaid":
+        query = query.filter_by(paid=False)
+    elif show == "paid":
+        query = query.filter_by(paid=True)
+    bills_list = query.order_by(Bill.due_date.asc().nullslast(), Bill.name).all()
+
+    total_unpaid = sum(b.amount for b in Bill.query.filter_by(paid=False).all())
+    total_paid = sum(b.amount for b in Bill.query.filter_by(paid=True).all())
+
+    return render_template(
+        "bills.html",
+        bills=bills_list,
+        bill_frequencies=BILL_FREQUENCIES,
+        show=show,
+        total_unpaid=total_unpaid,
+        total_paid=total_paid,
+        editing=None,
+    )
+
+
+@main.route("/bills/<int:bill_id>/edit", methods=["GET", "POST"])
+@login_required
+def bill_edit(bill_id):
+    bill = Bill.query.get_or_404(bill_id)
+    if request.method == "POST":
+        bill.name = request.form.get("name", "").strip() or bill.name
+        amount = request.form.get("amount", "").strip()
+        bill.amount = float(amount) if amount else bill.amount
+        bill.frequency = request.form.get("frequency", bill.frequency)
+        bill.category = request.form.get("category", "").strip()
+        bill.auto_pay = request.form.get("auto_pay") == "on"
+        bill.notes = request.form.get("notes", "").strip()
+        due = request.form.get("due_date")
+        bill.due_date = date.fromisoformat(due) if due else None
+        db.session.commit()
+        return redirect(url_for("main.bills"))
+
+    show = request.args.get("show", "unpaid")
+    query = Bill.query
+    if show == "unpaid":
+        query = query.filter_by(paid=False)
+    elif show == "paid":
+        query = query.filter_by(paid=True)
+    bills_list = query.order_by(Bill.due_date.asc().nullslast(), Bill.name).all()
+
+    total_unpaid = sum(b.amount for b in Bill.query.filter_by(paid=False).all())
+    total_paid = sum(b.amount for b in Bill.query.filter_by(paid=True).all())
+
+    return render_template(
+        "bills.html",
+        bills=bills_list,
+        bill_frequencies=BILL_FREQUENCIES,
+        show=show,
+        total_unpaid=total_unpaid,
+        total_paid=total_paid,
+        editing=bill,
+    )
+
+
+@main.route("/bills/<int:bill_id>/delete", methods=["POST"])
+@login_required
+def bill_delete(bill_id):
+    bill = Bill.query.get_or_404(bill_id)
+    db.session.delete(bill)
+    db.session.commit()
+    return redirect(url_for("main.bills"))
+
+
 @main.route("/calendar")
 @login_required
 def calendar_view():
@@ -596,6 +697,15 @@ def grocery_toggle(item_id):
     item.checked = not item.checked
     db.session.commit()
     return jsonify(item.to_dict())
+
+
+@api.route("/bills/<int:bill_id>/toggle", methods=["PATCH"])
+@login_required
+def bill_toggle(bill_id):
+    bill = Bill.query.get_or_404(bill_id)
+    bill.paid = not bill.paid
+    db.session.commit()
+    return jsonify(bill.to_dict())
 
 
 @api.route("/calendar/events", methods=["POST"])

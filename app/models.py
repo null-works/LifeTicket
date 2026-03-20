@@ -241,3 +241,55 @@ class JobApplication(db.Model):
     @property
     def is_active(self):
         return self.status not in ("rejected", "withdrawn")
+
+
+BILL_FREQUENCIES = [
+    ("once", "One-time"),
+    ("weekly", "Weekly"),
+    ("biweekly", "Bi-weekly"),
+    ("monthly", "Monthly"),
+    ("quarterly", "Quarterly"),
+    ("yearly", "Yearly"),
+]
+
+BILL_FREQUENCY_MAP = {key: label for key, label in BILL_FREQUENCIES}
+
+
+class Bill(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    amount = db.Column(db.Float, nullable=False, default=0.0)
+    due_date = db.Column(db.Date, nullable=True)
+    frequency = db.Column(db.String(20), default="monthly")
+    category = db.Column(db.String(100), default="")
+    paid = db.Column(db.Boolean, default=False)
+    auto_pay = db.Column(db.Boolean, default=False)
+    notes = db.Column(db.Text, default="")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    @property
+    def frequency_label(self):
+        return BILL_FREQUENCY_MAP.get(self.frequency, self.frequency)
+
+    @property
+    def is_overdue(self):
+        from datetime import date as d
+        return self.due_date and self.due_date < d.today() and not self.paid
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "amount": self.amount,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "frequency": self.frequency,
+            "category": self.category,
+            "paid": self.paid,
+            "auto_pay": self.auto_pay,
+            "notes": self.notes,
+        }
