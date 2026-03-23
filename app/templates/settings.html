@@ -46,6 +46,43 @@
         </form>
     </div>
 
+    <!-- CalDAV Sync -->
+    <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">CalDAV Sync</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Sync calendar events and ticket due dates to a CalDAV server (e.g. Radicale) for access from your phone, Roundcube, etc.</p>
+        <form method="POST" action="/settings/caldav" class="space-y-4">
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="caldav_enabled" {% if app_settings.caldav_enabled %}checked{% endif %}
+                           class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Enable CalDAV sync</span>
+                </label>
+            </div>
+            <div>
+                <label for="caldav_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Server URL</label>
+                <input type="url" id="caldav_url" name="caldav_url" value="{{ app_settings.caldav_url or '' }}"
+                       placeholder="http://radicale:5232"
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="caldav_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                    <input type="text" id="caldav_username" name="caldav_username" value="{{ app_settings.caldav_username or '' }}"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                </div>
+                <div>
+                    <label for="caldav_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <input type="password" id="caldav_password" name="caldav_password" placeholder="{% if app_settings.caldav_password %}(unchanged){% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                </div>
+            </div>
+            <button type="submit"
+                    class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                Save CalDAV Settings
+            </button>
+        </form>
+    </div>
+
     <!-- Change Password -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Change Password</h2>

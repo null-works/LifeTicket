@@ -7,6 +7,7 @@ from app import db
 from app.models import Ticket, Category, Tag, GroceryItem, CalendarEvent, Status, TicketComment, TicketAttachment, TicketHistory, JobApplication, JOB_STATUSES, Bill, BillPayment, BILL_FREQUENCIES
 from datetime import date, datetime, time
 import calendar as cal_mod
+from app.caldav_sync import sync_calendar_event, delete_calendar_event, sync_ticket, delete_ticket_event
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'pdf', 'txt', 'md', 'zip', 'csv', 'doc', 'docx', 'xls', 'xlsx'}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -182,6 +183,7 @@ def ticket_new():
         ticket = _save_ticket(Ticket(), request.form)
         db.session.add(ticket)
         db.session.commit()
+        sync_ticket(ticket)
         return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
 
     categories = Category.query.order_by(Category.name).all()
@@ -197,6 +199,7 @@ def ticket_edit(ticket_id):
     if request.method == "POST":
         _save_ticket(ticket, request.form)
         db.session.commit()
+        sync_ticket(ticket)
         return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
 
     categories = Category.query.order_by(Category.name).all()
@@ -209,6 +212,7 @@ def ticket_edit(ticket_id):
 @login_required
 def ticket_delete(ticket_id):
     ticket = Ticket.query.get_or_404(ticket_id)
+    delete_ticket_event(ticket_id)
     db.session.delete(ticket)
     db.session.commit()
     return redirect(url_for("main.tickets_dashboard"))
@@ -248,6 +252,7 @@ def ticket_resolve(ticket_id):
                 new_value=resolution_notes,
             ))
         db.session.commit()
+        delete_ticket_event(ticket_id)
     return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
 
 
@@ -849,6 +854,7 @@ def update_status(ticket_id):
         ticket.status = new_status
         ticket.updated_at = datetime.now()
         db.session.commit()
+        sync_ticket(ticket)
         return jsonify(ticket.to_dict())
     return jsonify({"error": "Invalid status"}), 400
 
@@ -905,6 +911,7 @@ def create_event():
             ev.end_time = time.fromisoformat(et)
     db.session.add(ev)
     db.session.commit()
+    sync_calendar_event(ev)
     return jsonify(ev.to_dict()), 201
 
 
@@ -912,6 +919,7 @@ def create_event():
 @login_required
 def delete_event(event_id):
     ev = CalendarEvent.query.get_or_404(event_id)
+    delete_calendar_event(event_id)
     db.session.delete(ev)
     db.session.commit()
     return jsonify({"ok": True})
@@ -939,6 +947,7 @@ def update_event(event_id):
         ev.start_time = time.fromisoformat(st) if st else None
         ev.end_time = time.fromisoformat(et) if et else None
     db.session.commit()
+    sync_calendar_event(ev)
     return jsonify(ev.to_dict())
 
 

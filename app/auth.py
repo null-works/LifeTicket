@@ -92,6 +92,24 @@ def add_user():
     return redirect(url_for("auth.settings"))
 
 
+@auth.route("/settings/caldav", methods=["POST"])
+@login_required
+def update_caldav():
+    app_settings = AppSettings.get()
+    app_settings.caldav_enabled = request.form.get("caldav_enabled") == "on"
+    app_settings.caldav_url = request.form.get("caldav_url", "").strip()
+    app_settings.caldav_username = request.form.get("caldav_username", "").strip()
+    pw = request.form.get("caldav_password", "").strip()
+    if pw:
+        app_settings.caldav_password = pw
+    db.session.commit()
+    # Reset cached CalDAV client so new settings take effect
+    from app.caldav_sync import _reset_client
+    _reset_client()
+    flash("CalDAV settings updated successfully.", "success")
+    return redirect(url_for("auth.settings"))
+
+
 @auth.route("/settings/delete-user/<int:user_id>", methods=["POST"])
 @login_required
 def delete_user(user_id):

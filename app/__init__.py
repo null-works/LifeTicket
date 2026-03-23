@@ -53,6 +53,8 @@ def create_app():
         _seed_statuses()
         _migrate_statuses()
         _ensure_admin(app)
+        from app.caldav_sync import init_calendar
+        init_calendar()
 
     return app
 
@@ -83,6 +85,16 @@ def _add_missing_columns():
             db.session.execute(text("ALTER TABLE job_application ADD COLUMN resume_original_name VARCHAR(255) DEFAULT ''"))
             db.session.commit()
             print("[LifeTicket] Added resume columns to job_application table")
+
+    if "app_settings" in inspector.get_table_names():
+        settings_cols = [c["name"] for c in inspector.get_columns("app_settings")]
+        if "caldav_enabled" not in settings_cols:
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_enabled BOOLEAN DEFAULT 0"))
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_url VARCHAR(500) DEFAULT ''"))
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_username VARCHAR(200) DEFAULT ''"))
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_password VARCHAR(500) DEFAULT ''"))
+            db.session.commit()
+            print("[LifeTicket] Added CalDAV columns to app_settings table")
 
 
 def _seed_statuses():

@@ -190,6 +190,10 @@ class AppSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ticket_prefix = db.Column(db.String(20), default="#")
     event_prefix = db.Column(db.String(20), default="EVT-")
+    caldav_enabled = db.Column(db.Boolean, default=False)
+    caldav_url = db.Column(db.String(500), default="")
+    caldav_username = db.Column(db.String(200), default="")
+    caldav_password = db.Column(db.String(500), default="")
 
     @staticmethod
     def get():
