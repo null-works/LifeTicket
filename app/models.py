@@ -191,9 +191,9 @@ class AppSettings(db.Model):
     ticket_prefix = db.Column(db.String(20), default="#")
     event_prefix = db.Column(db.String(20), default="EVT-")
     caldav_enabled = db.Column(db.Boolean, default=False)
-    caldav_url = db.Column(db.String(500), default="")
-    caldav_username = db.Column(db.String(200), default="")
-    caldav_password = db.Column(db.String(500), default="")
+    caldav_url = db.Column(db.String(500), default="http://radicale:5232")
+    caldav_username = db.Column(db.String(200), default="lifeticket")
+    caldav_password = db.Column(db.String(500), default="lifeticket")
 
     @staticmethod
     def get():

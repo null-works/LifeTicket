@@ -90,9 +90,9 @@ def _add_missing_columns():
         settings_cols = [c["name"] for c in inspector.get_columns("app_settings")]
         if "caldav_enabled" not in settings_cols:
             db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_enabled BOOLEAN DEFAULT 0"))
-            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_url VARCHAR(500) DEFAULT ''"))
-            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_username VARCHAR(200) DEFAULT ''"))
-            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_password VARCHAR(500) DEFAULT ''"))
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_url VARCHAR(500) DEFAULT 'http://radicale:5232'"))
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_username VARCHAR(200) DEFAULT 'lifeticket'"))
+            db.session.execute(text("ALTER TABLE app_settings ADD COLUMN caldav_password VARCHAR(500) DEFAULT 'lifeticket'"))
             db.session.commit()
             print("[LifeTicket] Added CalDAV columns to app_settings table")
 
