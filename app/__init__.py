@@ -67,6 +67,15 @@ def _add_missing_columns():
         db.session.commit()
         print("[LifeTicket] Added 'emoji' column to ticket table")
 
+    if "resolution_notes" not in columns:
+        db.session.execute(text("ALTER TABLE ticket ADD COLUMN resolution_notes TEXT DEFAULT ''"))
+        db.session.commit()
+        print("[LifeTicket] Added 'resolution_notes' column to ticket table")
+    if "resolved_at" not in columns:
+        db.session.execute(text("ALTER TABLE ticket ADD COLUMN resolved_at DATETIME"))
+        db.session.commit()
+        print("[LifeTicket] Added 'resolved_at' column to ticket table")
+
     if "job_application" in inspector.get_table_names():
         job_cols = [c["name"] for c in inspector.get_columns("job_application")]
         if "resume_filename" not in job_cols:
