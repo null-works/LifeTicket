@@ -16,6 +16,19 @@ main = Blueprint("main", __name__)
 api = Blueprint("api", __name__)
 
 
+# --- CalDAV well-known redirects (no login required) ---
+
+
+@main.route("/.well-known/caldav")
+def wellknown_caldav():
+    return redirect("/dav/", code=301)
+
+
+@main.route("/.well-known/carddav")
+def wellknown_carddav():
+    return redirect("/dav/", code=301)
+
+
 # --- Page Routes ---
 
 
