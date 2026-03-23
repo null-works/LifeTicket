@@ -17,15 +17,21 @@ api = Blueprint("api", __name__)
 
 
 # --- CalDAV well-known redirects (no login required) ---
+# DAVx5 sends PROPFIND, so we must accept all methods, not just GET.
 
 
-@main.route("/.well-known/caldav")
+@main.route("/.well-known/caldav", methods=["GET", "PROPFIND", "OPTIONS", "HEAD"])
 def wellknown_caldav():
     return redirect("/dav/", code=301)
 
 
-@main.route("/.well-known/carddav")
+@main.route("/.well-known/carddav", methods=["GET", "PROPFIND", "OPTIONS", "HEAD"])
 def wellknown_carddav():
+    return redirect("/dav/", code=301)
+
+
+@main.route("/dav", methods=["GET", "PROPFIND", "OPTIONS", "HEAD", "PUT", "DELETE", "REPORT"])
+def dav_no_slash():
     return redirect("/dav/", code=301)
 
 
