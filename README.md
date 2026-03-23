@@ -74,9 +74,9 @@ https://calendar.kylem.cc:5232/lifeticket/lifeticket/
 
 > If port 5232 isn't reachable externally, you'll need to open it in your firewall or add an Nginx proxy rule. See "Exposing Radicale" below.
 
-**Android (ICSx5 — free):**
-1. Install [ICSx5](https://icsx5.bitfire.at/) from F-Droid or Play Store
-2. Add subscription with the CalDAV URL above
+**Android:**
+1. Install a CalDAV sync app (e.g. DAVx5, ICSx5) from F-Droid or Play Store
+2. Add account → Base URL: `https://calendar.kylem.cc:5232`
 3. Username: `lifeticket` / Password: `lifeticket`
 5. Select the **LifeTicket** calendar to sync
 
