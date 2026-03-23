@@ -43,6 +43,15 @@ else
   fi
 fi
 
+# --- Clean up old Radicale calendar collection (renamed in v0.1.33) ---
+OLD_COLLECTION="/collections/collection-root/lifeticket/lifeticket"
+if docker compose ps radicale --status running -q 2>/dev/null | grep -q .; then
+  if docker compose exec -T radicale test -d "/data${OLD_COLLECTION}" 2>/dev/null; then
+    echo "Removing old CalDAV collection (lifeticket/lifeticket → lifeticket/calendar)..."
+    docker compose exec -T radicale rm -rf "/data${OLD_COLLECTION}"
+  fi
+fi
+
 # --- Build and start the app ---
 echo "Building and starting LifeTicket..."
 docker compose up -d --build
