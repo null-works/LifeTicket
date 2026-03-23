@@ -116,6 +116,8 @@ class Ticket(db.Model):
     priority = db.Column(db.String(10), default="medium")  # low, medium, high, urgent
     due_date = db.Column(db.Date, nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey("category.id"), nullable=True)
+    resolution_notes = db.Column(db.Text, default="")
+    resolved_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime,
@@ -139,6 +141,8 @@ class Ticket(db.Model):
             "category": self.category.to_dict() if self.category else None,
             "category_id": self.category_id,
             "tags": [t.to_dict() for t in self.tags],
+            "resolution_notes": self.resolution_notes or "",
+            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }

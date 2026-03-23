@@ -222,6 +222,35 @@ def ticket_view(ticket_id):
     return render_template("ticket_view.html", ticket=ticket, statuses=statuses)
 
 
+@main.route("/ticket/<int:ticket_id>/resolve", methods=["POST"])
+@login_required
+def ticket_resolve(ticket_id):
+    ticket = Ticket.query.get_or_404(ticket_id)
+    old_status = ticket.status
+    resolution_notes = request.form.get("resolution_notes", "").strip()
+    done_status = Status.query.filter_by(name="done").first()
+    if done_status:
+        ticket.status = done_status.name
+        ticket.resolution_notes = resolution_notes
+        ticket.resolved_at = datetime.now()
+        if old_status != done_status.name:
+            db.session.add(TicketHistory(
+                ticket_id=ticket.id,
+                field="status",
+                old_value=old_status,
+                new_value=done_status.name,
+            ))
+        if resolution_notes:
+            db.session.add(TicketHistory(
+                ticket_id=ticket.id,
+                field="resolution_notes",
+                old_value="",
+                new_value=resolution_notes,
+            ))
+        db.session.commit()
+    return redirect(url_for("main.ticket_view", ticket_id=ticket.id))
+
+
 @main.route("/ticket/<int:ticket_id>/comment", methods=["POST"])
 @login_required
 def ticket_add_comment(ticket_id):
