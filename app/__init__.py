@@ -30,10 +30,12 @@ def create_app():
 
     from app.routes import main, api
     from app.auth import auth
+    from app.dav_proxy import dav
 
     app.register_blueprint(main)
     app.register_blueprint(api, url_prefix="/api")
     app.register_blueprint(auth)
+    app.register_blueprint(dav, url_prefix="/dav")
 
     @app.context_processor
     def inject_globals():

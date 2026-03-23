@@ -30,11 +30,6 @@ def wellknown_carddav():
     return redirect("/dav/", code=301)
 
 
-@main.route("/dav", methods=["GET", "PROPFIND", "OPTIONS", "HEAD", "PUT", "DELETE", "REPORT"])
-def dav_no_slash():
-    return redirect("/dav/", code=301)
-
-
 # --- Page Routes ---
 
 
