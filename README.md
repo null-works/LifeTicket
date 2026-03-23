@@ -69,7 +69,7 @@ Sync is best-effort: if Radicale is temporarily unreachable, LifeTicket continue
 Radicale is proxied through Nginx at `/dav/`. The CalDAV URL for external clients is:
 
 ```
-https://calendar.kylem.cc/dav/lifeticket/lifeticket/
+https://calendar.kylem.cc/dav/lifeticket/calendar/
 ```
 
 **Android:**

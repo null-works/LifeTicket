@@ -46,10 +46,10 @@ def _get_calendar():
     )
     principal = _client.principal()
     for cal in principal.calendars():
-        if "lifeticket" in str(cal.url):
+        if "calendar" in str(cal.url):
             _calendar = cal
             return _calendar
-    _calendar = principal.make_calendar(name="LifeTicket", cal_id="lifeticket")
+    _calendar = principal.make_calendar(name="LifeTicket", cal_id="calendar")
     return _calendar
 
 
