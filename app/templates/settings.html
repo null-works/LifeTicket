@@ -48,8 +48,50 @@
 
     <!-- CalDAV Sync -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">CalDAV Sync</h2>
+        <div class="flex items-center gap-2 mb-1">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">CalDAV Sync</h2>
+            <button type="button" onclick="document.getElementById('caldav-help').classList.toggle('hidden')"
+                    class="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 hover:text-brand-600 hover:border-brand-400 dark:hover:text-brand-400 dark:hover:border-brand-500 transition text-xs font-bold"
+                    title="CalDAV setup guide">?</button>
+        </div>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Sync calendar events and ticket due dates to a CalDAV server (e.g. Radicale) for access from your phone, Roundcube, etc.</p>
+
+        <!-- Help panel -->
+        <div id="caldav-help" class="hidden mb-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-gray-900 dark:text-white">Setup Guide</h3>
+                <button type="button" onclick="document.getElementById('caldav-help').classList.add('hidden')"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">&times;</button>
+            </div>
+            <p>LifeTicket includes a bundled <strong>Radicale</strong> CalDAV server that runs automatically alongside the app. The default settings below are pre-configured — just enable the toggle and save.</p>
+            <div>
+                <p class="font-medium text-gray-900 dark:text-white mb-1">How it works</p>
+                <ul class="list-disc list-inside space-y-0.5 text-gray-600 dark:text-gray-400">
+                    <li>Calendar events sync on create, edit, and delete</li>
+                    <li>Ticket due dates appear as all-day events</li>
+                    <li>Resolved/closed tickets are removed automatically</li>
+                    <li>Sync is best-effort — if Radicale is down, LifeTicket keeps working</li>
+                </ul>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900 dark:text-white mb-1">Connect your devices</p>
+                <p class="mb-1">Radicale is available on port <strong>5232</strong>. Use this URL in your CalDAV app:</p>
+                <code class="block bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded text-xs">https://calendar.kylem.cc:5232/lifeticket/lifeticket/</code>
+                <p class="mt-1.5">Credentials: the username and password configured below.</p>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900 dark:text-white mb-1">Device instructions</p>
+                <ul class="list-disc list-inside space-y-0.5 text-gray-600 dark:text-gray-400">
+                    <li><strong>Android:</strong> Install DAVx5 → Add account → Login with URL and username</li>
+                    <li><strong>iOS:</strong> Settings → Calendar → Accounts → Add CalDAV Account</li>
+                    <li><strong>Thunderbird:</strong> New Calendar → On the Network → CalDAV URL above</li>
+                </ul>
+            </div>
+            <div>
+                <p class="font-medium text-gray-900 dark:text-white mb-1">Server URL explained</p>
+                <p class="text-gray-600 dark:text-gray-400"><code class="bg-gray-200 dark:bg-gray-600 px-1 rounded text-xs">http://radicale:5232</code> is the internal Docker address. LifeTicket uses this to talk to Radicale behind the scenes. You don't need to change it unless you're pointing to a different CalDAV server.</p>
+            </div>
+        </div>
         <form method="POST" action="/settings/caldav" class="space-y-4">
             <div>
                 <label class="flex items-center gap-2 cursor-pointer">
