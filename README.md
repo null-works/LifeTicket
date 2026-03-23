@@ -66,43 +66,25 @@ Sync is best-effort: if Radicale is temporarily unreachable, LifeTicket continue
 
 ### Connecting your devices
 
-Radicale is exposed on port **5232**. The CalDAV URL for external clients is:
+Radicale is proxied through Nginx at `/dav/`. The CalDAV URL for external clients is:
 
 ```
-https://calendar.kylem.cc:5232/lifeticket/lifeticket/
+https://calendar.kylem.cc/dav/lifeticket/lifeticket/
 ```
-
-> If port 5232 isn't reachable externally, you'll need to open it in your firewall or add an Nginx proxy rule. See "Exposing Radicale" below.
 
 **Android:**
 1. Install a CalDAV sync app (e.g. DAVx5, ICSx5) from F-Droid or Play Store
-2. Add account → Base URL: `https://calendar.kylem.cc:5232`
+2. Add account → Base URL: `https://calendar.kylem.cc/dav/`
 3. Username: `lifeticket` / Password: `lifeticket`
-5. Select the **LifeTicket** calendar to sync
+4. Select the **LifeTicket** calendar to sync
 
 **iOS:**
 1. Settings → Calendar → Accounts → Add Account → Other → Add CalDAV Account
-2. Server: `calendar.kylem.cc:5232`
+2. Server: `calendar.kylem.cc/dav/`
 3. Username: `lifeticket` / Password: `lifeticket`
 
 **Thunderbird / GNOME Calendar / other desktop apps:**
 - Add a CalDAV/network calendar with the URL above and the same credentials.
-
-### Exposing Radicale (optional Nginx config)
-
-If you want to access Radicale over HTTPS through your existing Nginx setup, add a location block or a separate server block. For example, to proxy on a subpath:
-
-```nginx
-# Add to your existing calendar.kylem.cc server block
-location /dav/ {
-    proxy_pass http://127.0.0.1:5232/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
-
-Then use `https://calendar.kylem.cc/dav/lifeticket/lifeticket/` as the CalDAV URL in your apps.
 
 ### Changing the Radicale password
 
