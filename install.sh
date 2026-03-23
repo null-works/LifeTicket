@@ -83,6 +83,14 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
+    location /.well-known/caldav {
+        return 301 /dav/;
+    }
+
+    location /.well-known/carddav {
+        return 301 /dav/;
+    }
+
     location /dav/ {
         proxy_pass http://127.0.0.1:5232/;
         proxy_set_header Host \$host;
